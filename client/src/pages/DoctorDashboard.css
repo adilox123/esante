@@ -1,0 +1,201 @@
+.doctor-dashboard {
+  display: flex;
+  min-height: calc(100vh - 70px);
+  background-color: #f8fafc;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* --- Menu Latéral (Sidebar) --- */
+.dashboard-sidebar {
+  width: 280px;
+  background-color: white;
+  border-right: 1px solid #e2e8f0;
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.doctor-profile-mini {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.avatar-pro {
+  width: 80px;
+  height: 80px;
+  background-color: #eff6ff;
+  color: #3182ce;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 15px auto;
+}
+
+.doctor-profile-mini h3 { color: #1e293b; font-size: 18px; margin-bottom: 5px; }
+.doctor-profile-mini p { color: #64748b; font-size: 14px; margin: 0; }
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  border-radius: 12px;
+  color: #64748b;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 16px;
+}
+
+.menu-item:hover { background-color: #f1f5f9; color: #3182ce; }
+.menu-item.active { background-color: #3182ce; color: white; box-shadow: 0 4px 15px rgba(49, 130, 206, 0.3); }
+
+/* --- Contenu Principal --- */
+.dashboard-content {
+  flex: 1;
+  padding: 40px;
+  overflow-y: auto;
+}
+
+.dashboard-header { margin-bottom: 30px; }
+.dashboard-header h1 { color: #1e293b; font-size: 28px; font-weight: 800; margin-bottom: 10px; }
+.dashboard-header p { color: #64748b; font-size: 16px; }
+
+/* --- Stats Cards --- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px;
+  margin-bottom: 40px;
+}
+
+.stat-card {
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.stat-icon {
+  width: 60px; height: 60px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.stat-info h4 { color: #64748b; font-size: 14px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;}
+.stat-info span { color: #1e293b; font-size: 28px; font-weight: 800; }
+
+/* --- Tableaux et Cartes --- */
+.content-card {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+  border: 1px solid #e2e8f0;
+}
+
+.content-card h2 { color: #1e293b; font-size: 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+
+/* Liste des RDV */
+.rdv-list { display: flex; flex-direction: column; gap: 15px; }
+
+.rdv-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;
+  transition: all 0.2s;
+}
+.rdv-item:hover { border-color: #3182ce; box-shadow: 0 4px 12px rgba(49, 130, 206, 0.08); }
+
+.rdv-info { display: flex; align-items: center; gap: 20px; }
+.rdv-time { background: #eff6ff; color: #3182ce; padding: 10px 15px; border-radius: 8px; font-weight: 800; font-size: 18px; }
+.rdv-patient h4 { color: #1e293b; font-size: 18px; margin-bottom: 5px; }
+.rdv-patient p { color: #64748b; font-size: 14px; margin: 0; }
+
+.rdv-actions { display: flex; gap: 10px; }
+.btn-action { padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; display: flex; align-items: center; gap: 8px; }
+.btn-action.success { background-color: #dcfce7; color: #16a34a; }
+.btn-action.success:hover { background-color: #bbf7d0; }
+.btn-action.note { background-color: #f1f5f9; color: #475569; }
+.btn-action.note:hover { background-color: #e2e8f0; }
+
+/* Phase 1: Zone de note privée */
+.private-note-zone {
+  margin-top: 15px; padding-top: 15px; border-top: 1px dashed #cbd5e1; width: 100%;
+}
+.private-note-zone textarea {
+  width: 100%; padding: 15px; border: 1px solid #cbd5e1; border-radius: 8px;
+  font-family: inherit; resize: vertical; margin-bottom: 10px;
+}
+.btn-save-note { background: #3182ce; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .doctor-dashboard { flex-direction: column; }
+  .dashboard-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e2e8f0; }
+  .stats-grid { grid-template-columns: 1fr; }
+  .rdv-item { flex-direction: column; align-items: flex-start; gap: 15px; }
+}
+/* --- Style pour l'onglet Mes Informations (Profil) --- */
+.profile-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.info-group {
+  background: #f8fafc;
+  padding: 15px 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.info-group label {
+  display: block;
+  font-size: 13px;
+  color: #64748b;
+  font-weight: bold;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-group p {
+  margin: 0;
+  color: #1e293b;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.btn-edit-profile {
+  background-color: #3182ce;
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+}
+
+.btn-edit-profile:hover {
+  background-color: #2b6cb0;
+}

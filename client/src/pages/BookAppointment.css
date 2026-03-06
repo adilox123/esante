@@ -1,0 +1,111 @@
+.booking-container {
+  background-color: #f4f7fe;
+  min-height: 100vh;
+  padding: 50px 20px;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+}
+
+.booking-wrapper {
+  display: flex;
+  max-width: 1000px;
+  width: 100%;
+  gap: 30px;
+}
+
+/* --- Colonne Gauche --- */
+.doctor-summary-card {
+  flex: 1;
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+  height: fit-content;
+  text-align: center;
+  border-top: 6px solid #3182ce;
+}
+
+.doctor-summary-avatar {
+  font-size: 60px;
+  background: #ebf8ff;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 20px auto;
+}
+
+.doctor-summary-name { color: #1a365d; font-size: 22px; font-weight: 800; margin-bottom: 5px; }
+.doctor-summary-spec { color: #3182ce; font-weight: 600; background: #ebf8ff; padding: 5px 15px; border-radius: 20px; display: inline-block; font-size: 14px; margin-bottom: 20px; }
+.doctor-summary-details p { color: #4a5568; font-size: 14px; margin: 8px 0; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+/* --- Colonne Droite --- */
+.booking-form-card {
+  flex: 2;
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+}
+
+.booking-form-card h2 { color: #1a365d; font-size: 26px; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #edf2f7; }
+
+.booking-section { margin-bottom: 30px; }
+.booking-section label { display: block; font-weight: 700; color: #2d3748; margin-bottom: 10px; font-size: 15px; }
+
+.booking-select, .booking-date {
+  width: 100%;
+  padding: 15px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 16px;
+  color: #2d3748;
+  transition: all 0.3s;
+  background-color: #f8fafc;
+  box-sizing: border-box;
+}
+
+.booking-select:focus, .booking-date:focus { border-color: #3182ce; background-color: white; outline: none; }
+
+/* --- Créneaux Horaires --- */
+.time-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+  gap: 12px;
+}
+
+.time-slot {
+  background-color: white;
+  border: 2px solid #e2e8f0;
+  color: #4a5568;
+  padding: 12px 0;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 15px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.time-slot:hover { border-color: #3182ce; color: #3182ce; }
+.time-slot.selected { background-color: #3182ce; border-color: #3182ce; color: white; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(49, 130, 206, 0.3); }
+
+/* --- Bouton Valider --- */
+.btn-confirm-booking {
+  width: 100%; background-color: #3182ce; color: white; padding: 18px; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.3s; margin-top: 20px;
+}
+.btn-confirm-booking:hover:not(:disabled) { background-color: #2b6cb0; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(49, 130, 206, 0.3); }
+.btn-confirm-booking:disabled { background-color: #cbd5e1; cursor: not-allowed; }
+
+/* --- Écran de Succès --- */
+.success-booking { text-align: center; padding: 40px 20px; }
+.success-icon { font-size: 80px; margin-bottom: 20px; color: #16a34a; }
+.success-booking h2 { color: #16a34a; margin-bottom: 10px; border: none; }
+.success-booking p { color: #4a5568; font-size: 16px; margin-bottom: 30px; }
+.btn-return { background: #f1f5f9; color: #334155; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; }
+
+/* Responsive */
+@media (max-width: 768px) { .booking-wrapper { flex-direction: column; } }

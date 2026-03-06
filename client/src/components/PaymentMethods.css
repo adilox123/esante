@@ -1,0 +1,380 @@
+/* components/PaymentMethods.css */
+.payment-methods-container {
+  margin-top: 30px;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.payment-methods-container h3 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 18px;
+  text-align: center;
+}
+
+.methods-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.method-card {
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 15px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #f8fafc;
+}
+
+.method-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.method-card.selected {
+  border-color: #3498db;
+  background: #ebf5ff;
+}
+
+.method-icon {
+  font-size: 32px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.method-name {
+  font-weight: 600;
+  color: #2c3e50;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.accepted-badges {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  color: #4a5568;
+}
+
+.card-form-container {
+  margin-top: 20px;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 10px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-form-container h4 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+.card-form {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #4a5568;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.secure-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 20px 0;
+  padding: 10px;
+  background: #e8f5e9;
+  border-radius: 6px;
+  color: #2e7d32;
+  font-size: 14px;
+}
+
+.lock-icon {
+  font-size: 16px;
+}
+
+.pay-now-btn {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.pay-now-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .methods-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .methods-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Ajoute à la fin du fichier PaymentMethods.css */
+
+/* Styles pour PayPal */
+.paypal-form-container {
+  margin-top: 20px;
+  padding: 25px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  animation: slideDown 0.3s ease;
+  border: 2px solid #003087;
+}
+
+.paypal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #003087;
+}
+
+.paypal-icon {
+  font-size: 32px;
+}
+
+.paypal-header h4 {
+  color: #003087;
+  font-size: 18px;
+  margin: 0;
+}
+
+.paypal-form {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.paypal-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 15px 0;
+  font-size: 14px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #4a5568;
+  cursor: pointer;
+}
+
+.forgot-link {
+  color: #003087;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+}
+
+.paypal-badge {
+  background: #e8f0fe !important;
+  color: #003087 !important;
+  border: 1px solid #003087;
+  margin: 20px 0;
+}
+
+.paypal-login-btn {
+  width: 100%;
+  padding: 15px;
+  background: #003087;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 10px;
+}
+
+.paypal-login-btn:hover {
+  background: #002267;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 48, 135, 0.3);
+}
+
+.paypal-footer {
+  text-align: center;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #cbd5e0;
+}
+
+.paypal-footer p {
+  color: #718096;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.create-account-link {
+  color: #003087;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.create-account-link:hover {
+  text-decoration: underline;
+}
+
+/* Animation pour les formulaires */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .paypal-options {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  
+  .paypal-form-container {
+    padding: 15px;
+  }
+}
+/* Ajoute à la fin du fichier PaymentMethods.css */
+
+/* Styles pour les boutons de redirection */
+.forgot-link-btn {
+  background: none;
+  border: none;
+  color: #003087;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.forgot-link-btn:hover {
+  color: #001f5c;
+}
+
+.create-account-btn {
+  background: white;
+  border: 2px solid #003087;
+  color: #003087;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 5px;
+}
+
+.create-account-btn:hover {
+  background: #003087;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 48, 135, 0.2);
+}
+
+.paypal-note {
+  font-size: 12px !important;
+  color: #94a3b8 !important;
+  margin-top: 10px !important;
+  font-style: italic;
+}
+
+/* Animation d'ouverture dans un nouvel onglet */
+.paypal-footer {
+  text-align: center;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.paypal-footer p {
+  color: #64748b;
+  font-size: 14px;
+  margin-bottom: 10px;
+}

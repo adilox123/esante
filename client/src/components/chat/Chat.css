@@ -1,0 +1,482 @@
+/* Chat.css - Médecin à gauche, Patient à droite */
+
+/* ===== VARIABLES ===== */
+:root {
+    --primary-blue: #007bff;
+    --primary-blue-dark: #0056b3;
+    --blue-light: #e3f2fd;
+    --blue-soft: #f0f7ff;
+    --white: #ffffff;
+    --gray-light: #f8f9fa;
+    --gray-border: #e9ecef;
+    --gray-text: #6c757d;
+    --shadow: 0 4px 20px rgba(0, 123, 255, 0.08);
+    --radius: 12px;
+    --radius-lg: 18px;
+    --radius-sm: 25px;
+}
+
+/* ===== CONTAINER PRINCIPAL ===== */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 80vh;
+    max-width: 900px;
+    margin: 20px auto;
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    border: 1px solid var(--gray-border);
+}
+
+/* ===== EN-TÊTE DU CHAT ===== */
+.chat-header {
+    background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
+    color: white;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chat-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    color: white;
+}
+
+.chat-header svg {
+    font-size: 1.5rem;
+    opacity: 0.9;
+    color: white;
+}
+
+/* ===== ZONE DES MESSAGES ===== */
+.chat-messages {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    background-color: var(--gray-light);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    scroll-behavior: smooth;
+}
+
+/* Scrollbar personnalisée */
+.chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+    background: var(--gray-border);
+    border-radius: 10px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: var(--primary-blue);
+    border-radius: 10px;
+    opacity: 0.5;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-blue-dark);
+}
+
+/* ===== MESSAGE INDIVIDUEL ===== */
+.message-wrapper {
+    display: flex;
+    flex-direction: column;
+    max-width: 70%;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Messages du médecin à GAUCHE */
+.message-wrapper.medecin {
+    align-self: flex-start;
+}
+
+/* Messages du patient à DROITE */
+.message-wrapper.patient {
+    align-self: flex-end;
+}
+
+/* Métadonnées du message (expéditeur + heure) */
+.message-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    padding: 0 4px;
+}
+
+.message-wrapper.patient .message-meta {
+    justify-content: flex-end;
+}
+
+.message-wrapper.medecin .message-meta {
+    justify-content: flex-start;
+}
+
+/* Badge de l'expéditeur */
+.message-sender {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    background: var(--white);
+    border: 1px solid var(--gray-border);
+    color: var(--gray-text);
+}
+
+.message-wrapper.medecin .message-sender {
+    background: var(--primary-blue);
+    border-color: var(--primary-blue);
+    color: white;
+}
+
+.message-wrapper.patient .message-sender {
+    background: var(--white);
+    border-color: var(--gray-border);
+    color: var(--gray-text);
+}
+
+.message-sender-icon {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.message-wrapper.medecin .message-sender-icon {
+    color: white;
+}
+
+/* Horodatage */
+.message-timestamp {
+    font-size: 0.7rem;
+    color: var(--gray-text);
+    font-weight: 400;
+}
+
+.message-wrapper.medecin .message-timestamp {
+    color: var(--primary-blue);
+}
+
+/* Bulle de message */
+.message-bubble {
+    padding: 12px 16px;
+    border-radius: var(--radius-lg);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    position: relative;
+    word-wrap: break-word;
+    box-shadow: 0 2px 5px rgba(0, 123, 255, 0.05);
+    transition: transform 0.2s;
+    border: 1px solid transparent;
+}
+
+.message-bubble:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.1);
+}
+
+/* Bulle du médecin (gauche) */
+.message-wrapper.medecin .message-bubble {
+    background-color: var(--primary-blue);
+    color: white;
+    border-bottom-left-radius: 4px;
+}
+
+/* Bulle du patient (droite) */
+.message-wrapper.patient .message-bubble {
+    background-color: var(--white);
+    color: #2c3e50;
+    border: 1px solid var(--gray-border);
+    border-bottom-right-radius: 4px;
+}
+
+/* Contenu du message */
+.message-content {
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+/* Indicateur de lecture */
+.message-status {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 0.7rem;
+    opacity: 0.7;
+}
+
+.message-wrapper.medecin .message-status {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.message-wrapper.patient .message-status {
+    color: var(--primary-blue);
+}
+
+/* ===== SÉPARATEUR DE DATE ===== */
+.date-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 16px 0;
+    position: relative;
+}
+
+.date-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--primary-blue), transparent);
+}
+
+.date-divider span {
+    background: var(--white);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary-blue);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    z-index: 1;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.1);
+    border: 1px solid var(--gray-border);
+}
+
+/* ===== ZONE DE SAISIE ===== */
+.chat-input-area {
+    padding: 20px 24px;
+    background: var(--white);
+    border-top: 1px solid var(--gray-border);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.chat-input-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: var(--gray-light);
+    border-radius: 30px;
+    padding: 4px 4px 4px 20px;
+    border: 1px solid var(--gray-border);
+    transition: all 0.3s;
+}
+
+.chat-input-wrapper:focus-within {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.chat-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 12px 0;
+    font-size: 0.95rem;
+    outline: none;
+    color: #2c3e50;
+}
+
+.chat-input::placeholder {
+    color: #adb5bd;
+    font-style: italic;
+}
+
+.btn-send {
+    background: var(--primary-blue);
+    color: white;
+    border: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2);
+}
+
+.btn-send:hover:not(:disabled) {
+    background: var(--primary-blue-dark);
+    transform: scale(1.05) rotate(10deg);
+    box-shadow: 0 6px 15px rgba(0, 123, 255, 0.3);
+}
+
+.btn-send:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.btn-send svg {
+    font-size: 1.2rem;
+    color: white;
+}
+
+/* ===== INDICATEUR DE TYPING ===== */
+.typing-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 16px;
+    background: var(--white);
+    border-radius: 20px;
+    border: 1px solid var(--gray-border);
+    box-shadow: 0 2px 5px rgba(0, 123, 255, 0.03);
+    margin-top: 8px;
+}
+
+.typing-indicator span {
+    width: 6px;
+    height: 6px;
+    background: var(--gray-text);
+    border-radius: 50%;
+    animation: typingPulse 1.4s infinite;
+}
+
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes typingPulse {
+    0%, 60%, 100% { 
+        transform: translateY(0);
+        background: var(--gray-text);
+    }
+    30% { 
+        transform: translateY(-4px);
+        background: var(--primary-blue);
+    }
+}
+
+/* ===== ÉTATS DE CHARGEMENT ===== */
+.chat-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 16px;
+    color: var(--gray-text);
+}
+
+.chat-loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--gray-border);
+    border-top-color: var(--primary-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ===== MESSAGE DE BIENVENUE / SYSTÈME ===== */
+.system-message {
+    text-align: center;
+    margin: 16px 0;
+}
+
+.system-message span {
+    background: var(--blue-soft);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: var(--primary-blue);
+    font-style: italic;
+    border: 1px solid var(--gray-border);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .chat-container {
+        height: 90vh;
+        margin: 10px;
+        border-radius: 10px;
+    }
+    
+    .chat-header {
+        padding: 12px 16px;
+    }
+    
+    .chat-messages {
+        padding: 16px;
+    }
+    
+    .message-wrapper {
+        max-width: 85%;
+    }
+    
+    .chat-input-area {
+        padding: 16px;
+    }
+    
+    .message-sender {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .chat-header h2 {
+        font-size: 1rem;
+    }
+    
+    .message-wrapper {
+        max-width: 90%;
+    }
+    
+    .message-bubble {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+    }
+    
+    .message-sender {
+        max-width: 150px;
+    }
+    
+    .chat-input-wrapper {
+        padding-left: 15px;
+    }
+    
+    .btn-send {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .btn-send svg {
+        font-size: 1rem;
+    }
+}

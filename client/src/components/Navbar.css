@@ -1,0 +1,64 @@
+.global-navbar {
+  position: sticky; /* Garde la navbar visible lors du scroll */
+  top: 0;           /* La colle tout en haut de l'écran */
+  z-index: 1000;    /* S'assure qu'elle passe au-dessus du reste du contenu */
+  
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 5%;
+  background-color: white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); /* Jolie ombre en dessous */
+}
+
+.nav-logo a {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0056d2;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-menu {
+  display: flex;
+  gap: 30px;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #1e293b;
+  font-weight: 600;
+  transition: color 0.3s;
+}
+
+.nav-link:hover {
+  color: #0056d2;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.btn-text {
+  text-decoration: none;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.btn-primary {
+  background-color: #0056d2;
+  color: white;
+  padding: 10px 24px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-primary:hover {
+  background-color: #0045a8;
+}
