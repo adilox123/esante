@@ -1,4 +1,4 @@
-// pages/EditProfile.jsx - Version Patient (sans adresse)
+// pages/EditProfile.jsx - Version Patient (avec adresse)
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -17,8 +17,8 @@ const EditProfile = () => {
     email: '',
     telephone: '',
     date_naissance: '',
-    groupe_sanguin: 'Non renseigné'
-    // ✅ Adresse, ville et code postal supprimés
+    groupe_sanguin: 'Non renseigné',
+    adresse: '' // ✅ Ajout de l'adresse ici
   });
 
   const groupesSanguins = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Non renseigné'];
@@ -42,8 +42,8 @@ const EditProfile = () => {
         email: response.data.user?.email || '',
         telephone: response.data.telephone || '',
         date_naissance: response.data.date_naissance || '',
-        groupe_sanguin: response.data.groupe_sanguin || 'Non renseigné'
-        // ✅ Adresse non incluse
+        groupe_sanguin: response.data.groupe_sanguin || 'Non renseigné',
+        adresse: response.data.adresse || '' // ✅ Récupération de l'adresse depuis la BD
       });
       
       setLoading(false);
@@ -74,14 +74,15 @@ const EditProfile = () => {
       const profileResponse = await api.get(`/patients/profile?userId=${userId}`);
       const patientId = profileResponse.data.id;
       
-      // ✅ Envoyer seulement les champs patients
+      // ✅ Envoi de l'adresse avec les autres champs
       await api.put(`/patients/${patientId}`, {
         nom: formData.nom,
         prenom: formData.prenom,
         email: formData.email,
         telephone: formData.telephone,
         date_naissance: formData.date_naissance,
-        groupe_sanguin: formData.groupe_sanguin
+        groupe_sanguin: formData.groupe_sanguin,
+        adresse: formData.adresse 
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -89,7 +90,7 @@ const EditProfile = () => {
       setSuccess(true);
       
       setTimeout(() => {
-        navigate('/patient-dashboard', { 
+        navigate('/dashboard', { // ⚠️ J'ai remis '/dashboard' au lieu de '/patient-dashboard' selon ta capture d'écran précédente
           state: { 
             message: '✅ Vos informations ont été mises à jour avec succès !',
             type: 'success'
@@ -106,7 +107,7 @@ const EditProfile = () => {
   };
 
   const handleCancel = () => {
-    navigate('/patient-dashboard');
+    navigate('/dashboard'); // ⚠️ Ajusté pour correspondre à ton URL
   };
 
   if (loading) {
@@ -206,7 +207,17 @@ const EditProfile = () => {
             </div>
           </div>
 
-          {/* ✅ Section adresse complètement supprimée */}
+          {/* ✅ Ajout du champ Adresse ici */}
+          <div className="form-group">
+            <label>Adresse</label>
+            <input
+              type="text"
+              name="adresse"
+              value={formData.adresse}
+              onChange={handleChange}
+              placeholder="Ex: Quartier Agdal, Rabat"
+            />
+          </div>
 
           <div className="form-actions">
             <button 

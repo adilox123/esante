@@ -1,8 +1,7 @@
 // controllers/patientController.js
-console.log('✅ patientController chargé avec succès !'); // ← Ajoute cette ligne
 
+console.log('✅ patientController chargé avec succès !');
 
-// controllers/patientController.js
 const { Patient, User, RendezVous, Medecin } = require('../models');
 
 const patientController = {
@@ -23,7 +22,7 @@ const patientController = {
         include: [
           { 
             model: User, 
-            as: 'User',
+            as: 'user',
             attributes: ['nom', 'prenom', 'email'] 
           }
         ]
@@ -57,6 +56,7 @@ const patientController = {
           telephone: newPatient.telephone,
           adresse: newPatient.adresse,
           date_naissance: newPatient.date_naissance,
+          sexe: newPatient.sexe,
           groupe_sanguin: newPatient.groupe_sanguin,
           ville: newPatient.ville,
           code_postal: newPatient.code_postal
@@ -64,11 +64,24 @@ const patientController = {
       }
 
       console.log("✅ Patient trouvé avec ID:", patient.id);
-      res.json(patient);
+      
+      // 🎯 CORRECTION : On structure explicitement la réponse
+      return res.json({
+        id: patient.id,
+        user_id: patient.user_id,
+        user: patient.user,
+        telephone: patient.telephone,
+        adresse: patient.adresse,
+        date_naissance: patient.date_naissance,
+        sexe: patient.sexe,
+        groupe_sanguin: patient.groupe_sanguin,
+        ville: patient.ville,
+        code_postal: patient.code_postal
+      });
       
     } catch (error) {
       console.error("❌ Erreur getProfile:", error);
-      res.status(500).json({ 
+      return res.status(500).json({ 
         error: error.message,
         stack: error.stack 
       });
@@ -123,11 +136,11 @@ const patientController = {
       };
 
       console.log("✅ Patient trouvé:", patientData);
-      res.json({ success: true, patient: patientData });
+      return res.json({ success: true, patient: patientData });
       
     } catch (error) {
       console.error("❌ Erreur getPatientById:", error);
-      res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: error.message });
     }
   },
 
@@ -179,18 +192,16 @@ const patientController = {
       
       console.log("✅ Patient mis à jour avec succès");
       
-      res.json({
+      return res.json({
         success: true,
         message: "Informations mises à jour avec succès"
       });
       
     } catch (error) {
       console.error("❌ Erreur updatePatient:", error);
-      res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: error.message });
     }
-  },
-
-  // ... autres fonctions
+  }
 };
 
 module.exports = patientController;

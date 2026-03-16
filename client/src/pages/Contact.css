@@ -1,114 +1,184 @@
-/* --- Conteneur global --- */
+/* =========================================
+   CONTENEUR GLOBAL
+   ========================================= */
 .contact-page-container {
   background-color: #f8fafc;
   min-height: 100vh;
-  padding: 60px 20px;
-  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  padding: 80px 20px;
+  font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   display: flex;
   justify-content: center;
   align-items: center;
-}
-
-/* --- La carte principale qui contient tout --- */
-.contact-wrapper {
-  display: flex;
-  max-width: 1100px;
-  width: 100%;
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
+  /* Ajout d'un motif subtil en arrière-plan */
+  background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 
 /* =========================================
-   PARTIE GAUCHE : INFOS & RÉSEAUX
+   LA CARTE PRINCIPALE (Wrapper)
+   ========================================= */
+.contact-wrapper {
+  display: flex;
+  max-width: 1150px;
+  width: 100%;
+  background: white;
+  border-radius: 24px;
+  /* Ombre teintée ultra-moderne au lieu d'un gris plat */
+  box-shadow: 0 25px 50px -12px rgba(26, 54, 93, 0.15), 
+              0 10px 25px -5px rgba(26, 54, 93, 0.05);
+  overflow: hidden;
+  position: relative;
+}
+
+/* =========================================
+   PARTIE GAUCHE : INFOS (Le panneau bleu)
    ========================================= */
 .contact-info-panel {
   flex: 1;
-  background: linear-gradient(135deg, #1a365d 0%, #3182ce 100%);
+  background: linear-gradient(145deg, #1a365d 0%, #2563eb 50%, #3182ce 100%);
   color: white;
-  padding: 50px 40px;
+  padding: 60px 50px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ajout d'une forme géométrique décorative moderne */
+.contact-info-panel::before {
+  content: '';
+  position: absolute;
+  bottom: -50px;
+  right: -50px;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.contact-info-panel::after {
+  content: '';
+  position: absolute;
+  top: -30px;
+  left: -30px;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
 }
 
 .contact-info-panel h2 {
-  font-size: 32px;
-  margin-bottom: 15px;
-  font-weight: 700;
+  font-size: 36px;
+  margin-bottom: 16px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  position: relative;
+  z-index: 2;
 }
 
 .contact-info-panel p {
-  color: #e2e8f0;
-  line-height: 1.6;
-  margin-bottom: 40px;
+  color: #e0f2fe;
+  line-height: 1.7;
+  margin-bottom: 45px;
+  font-size: 16px;
+  position: relative;
+  z-index: 2;
 }
 
+/* --- Éléments de contact --- */
 .info-items {
   display: flex;
   flex-direction: column;
-  gap: 25px;
+  gap: 35px;
   margin-bottom: 50px;
+  position: relative;
+  z-index: 2;
 }
 
 .info-item {
   display: flex;
-  align-items: flex-start;
-  gap: 15px;
+  align-items: center;
+  gap: 20px;
+  transition: transform 0.3s ease;
+}
+
+.info-item:hover {
+  transform: translateX(5px);
 }
 
 .info-icon {
-  font-size: 24px;
+  font-size: 22px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 12px;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(5px);
 }
 
 .info-text h4 {
-  margin: 0 0 5px 0;
-  font-size: 16px;
-  color: #bee3f8;
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  color: #bae6fd;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
 }
 
 .info-text p {
   margin: 0;
   color: white;
-  font-weight: 600;
+  font-weight: 500;
+  font-size: 17px;
 }
 
-/* --- Icônes Réseaux Sociaux --- */
+/* --- Réseaux Sociaux --- */
+.social-media-section {
+  position: relative;
+  z-index: 2;
+}
+
 .social-media-section h4 {
   margin-bottom: 20px;
-  font-size: 18px;
-  color: #bee3f8;
+  font-size: 15px;
+  color: #bae6fd;
+  font-weight: 600;
 }
 
 .social-icons {
   display: flex;
-  gap: 15px;
+  gap: 16px;
 }
 
 .social-btn {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px; /* Carré arrondi moderne au lieu du cercle classique */
   background-color: rgba(255, 255, 255, 0.1);
   display: flex;
   justify-content: center;
   align-items: center;
   color: white;
   text-decoration: none;
-  transition: all 0.3s ease;
+  /* Transition fluide cubic-bezier */
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
 }
 
 .social-btn svg {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   fill: currentColor;
 }
 
 .social-btn:hover {
   background-color: white;
-  color: #3182ce;
-  transform: translateY(-5px);
+  color: #2563eb;
+  transform: translateY(-4px) scale(1.05);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
 /* =========================================
@@ -116,77 +186,105 @@
    ========================================= */
 .contact-form-panel {
   flex: 1.5;
-  padding: 50px;
+  padding: 60px;
   background-color: white;
 }
 
 .contact-form-panel h3 {
-  color: #1a365d;
-  font-size: 28px;
-  margin-bottom: 30px;
+  color: #1e293b;
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 40px;
+  letter-spacing: -0.5px;
 }
 
 .form-group {
-  margin-bottom: 25px;
+  margin-bottom: 24px;
 }
 
 .form-group label {
   display: block;
-  color: #4a5568;
+  color: #475569;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   font-size: 14px;
 }
 
+/* Inputs Premium : Fond gris doux sans bordure dure */
 .form-input, .form-textarea {
   width: 100%;
-  padding: 14px 18px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  background-color: #f8fafc;
+  padding: 16px 20px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background-color: #f1f5f9;
   font-size: 15px;
-  color: #2d3748;
-  transition: all 0.3s ease;
+  color: #0f172a;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   outline: none;
   font-family: inherit;
+  box-sizing: border-box;
 }
 
 .form-textarea {
   resize: vertical;
-  min-height: 120px;
+  min-height: 140px;
 }
 
+/* Effet de focus "Apple-like" */
 .form-input:focus, .form-textarea:focus {
-  border-color: #3182ce;
   background-color: white;
-  box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15), 
+              0 4px 12px rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
 }
 
+.form-input::placeholder, .form-textarea::placeholder {
+  color: #94a3b8;
+}
+
+/* Bouton Premium */
 .btn-submit {
-  background-color: #3182ce;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: white;
   border: none;
-  padding: 16px 35px;
+  padding: 18px 40px;
   font-size: 16px;
   font-weight: 700;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
+  margin-top: 10px;
+  /* Ombre du bouton bleue lumineuse */
+  box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4);
 }
 
 .btn-submit:hover {
-  background-color: #2b6cb0;
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(49, 130, 206, 0.3);
+  box-shadow: 0 15px 25px -5px rgba(37, 99, 235, 0.5);
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
 }
 
-/* --- Responsive (Mobile) --- */
+.btn-submit:active {
+  transform: scale(0.98); /* Effet d'enfoncement physique */
+}
+
+/* =========================================
+   RESPONSIVE (Mobiles)
+   ========================================= */
 @media (max-width: 900px) {
   .contact-wrapper {
     flex-direction: column;
+    border-radius: 20px;
   }
-  .contact-info-panel, .contact-form-panel {
-    padding: 30px;
+  .contact-info-panel {
+    padding: 40px 30px;
+  }
+  .contact-form-panel {
+    padding: 40px 30px;
+  }
+  .contact-page-container {
+    padding: 40px 15px;
   }
 }

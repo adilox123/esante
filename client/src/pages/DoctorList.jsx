@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaUserMd, FaMapMarkerAlt, FaPhone, FaEnvelope, FaRegHeart, FaHeart, FaSearch } from 'react-icons/fa';
-import { api } from '../services/api'; // IMPORT DÉPLACÉ EN HAUT
+import { 
+  FaUserMd, FaMapMarkerAlt, FaPhone, FaEnvelope, FaRegHeart, 
+  FaHeart, FaSearch, FaMoneyBillWave, FaExclamationTriangle // 🎯 Ajout de l'icône d'alerte
+} from 'react-icons/fa'; 
+import { api } from '../services/api'; 
 import './DoctorList.css'; 
 
 export default function DoctorList() {
@@ -18,15 +21,12 @@ export default function DoctorList() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // 1. Charger tous les médecins
         const resMedecins = await api.get('/medecins');
         setMedecins(resMedecins.data);
         setError(null);
 
-        // 2. Charger les favoris si l'utilisateur est connecté
         if (patientId) {
           const resFavoris = await api.get(`/favoris/${patientId}`);
-          // On s'assure que ce sont des nombres pour la comparaison plus tard
           const idsEnNombres = resFavoris.data.map(fav => Number(fav.medecinId || fav));
           setFavorisIds(idsEnNombres);
         }
@@ -41,7 +41,6 @@ export default function DoctorList() {
     fetchData();
   }, [patientId]);
 
-  // Fonction pour gérer le clic sur le coeur
   const handleToggleFavori = async (medecinId) => {
     if (!patientId) {
       alert("Veuillez vous connecter en tant que patient pour ajouter aux favoris.");
@@ -65,7 +64,6 @@ export default function DoctorList() {
     }
   };
 
-  // Filtrage intelligent
   const filteredMedecins = medecins.filter((medecin) => {
     const nomMedecin = medecin.User?.nom?.toLowerCase() || "";
     const speMedecin = medecin.Specialite?.nom?.toLowerCase() || "";
@@ -161,7 +159,7 @@ export default function DoctorList() {
                         <FaUserMd size={26} />
                       </div>
                       <div>
-                        <h3 className="doctor-name">{medecin.User?.nom}</h3>
+                        <h3 className="doctor-name">{medecin.User?.nom} {medecin.User?.prenom}</h3>
                         <span className="doctor-specialty">
                           {medecin.Specialite?.nom || "Médecin Généraliste"}
                         </span>
@@ -172,6 +170,28 @@ export default function DoctorList() {
                       <li><span className="info-icon" style={{color: '#3182ce'}}><FaMapMarkerAlt /></span> <strong>Cabinet :</strong> {medecin.adresse || "Non communiquée"}</li>
                       <li><span className="info-icon" style={{color: '#3182ce'}}><FaPhone /></span> <strong>Téléphone :</strong> {medecin.telephone || "Non communiqué"}</li>
                       <li><span className="info-icon" style={{color: '#3182ce'}}><FaEnvelope /></span> <strong>Email :</strong> {medecin.User?.email}</li>
+                      <li><span className="info-icon" style={{color: '#16a34a'}}><FaMoneyBillWave /></span> <strong>Tarif consultation :</strong> {medecin.tarif || 200} DH</li>
+
+                      {/* 🎯 NOUVEAU : ZONE D'INFORMATION SUR LES ABSENCES */}
+                      {medecin.absences && medecin.absences.length > 0 && (
+                        <li style={{ 
+                          marginTop: '10px', 
+                          padding: '10px', 
+                          backgroundColor: '#fff1f2', 
+                          borderRadius: '8px', 
+                          border: '1px solid #fecdd3' 
+                        }}>
+                          <div style={{ color: '#e11d48', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', fontSize: '0.9em' }}>
+                            <FaExclamationTriangle /> Information Absence :
+                          </div>
+                          {medecin.absences.slice(0, 2).map((abs, index) => (
+                            <p key={index} style={{ margin: '4px 0 0 24px', fontSize: '0.85em', color: '#475569' }}>
+                              • Absent le {new Date(abs.date_absence).toLocaleDateString('fr-FR')} ({abs.periode})
+                            </p>
+                          ))}
+                          
+                        </li>
+                      )}
                     </ul>
 
                     <Link to={`/book/${medecin.id}`} className="btn-appointment" style={{ display: 'block', textAlign: 'center', textDecoration: 'none', boxSizing: 'border-box' }}>

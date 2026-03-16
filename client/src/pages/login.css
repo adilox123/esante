@@ -1,6 +1,125 @@
-.auth-container { height: 90vh; display: flex; align-items: center; justify-content: center; background: #f8fafc; }
-.auth-box { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 400px; text-align: center; }
-.auth-box h2 { color: #1e3a8a; margin-bottom: 25px; }
-.auth-box input, .auth-box select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 10px; outline: none; }
-.auth-box button { width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }
-.auth-box p { margin-top: 20px; font-size: 0.9rem; color: #64748b; }
+/* =========================================
+   PAGE D'AUTHENTIFICATION (Login / Register)
+   ========================================= */
+
+/* --- Conteneur Global --- */
+.auth-container { 
+  min-height: calc(100vh - 70px); /* S'adapte à l'écran moins la navbar */
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  /* Même fond Premium que les autres pages */
+  background: radial-gradient(circle at 10% 10%, #e0e7ff 0%, #f4f7fe 40%, #e0f2fe 100%);
+  padding: 20px;
+  font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --- La Carte Blanche (Glassmorphism) --- */
+.auth-box { 
+  background: rgba(255, 255, 255, 0.85); 
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  padding: 50px 40px; 
+  border-radius: 32px; 
+  box-shadow: 0 20px 50px -10px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1); 
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  width: 100%; 
+  max-width: 420px; 
+  text-align: center; 
+  animation: fadeUpAuth 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeUpAuth {
+  0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* --- Titre --- */
+.auth-box h2 { 
+  color: #0f172a; 
+  margin-top: 0;
+  margin-bottom: 35px; 
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+/* --- Champs de Saisie --- */
+.auth-box input, 
+.auth-box select { 
+  width: 100%; 
+  padding: 16px 20px; 
+  margin-bottom: 20px; 
+  border: 2px solid transparent; 
+  border-radius: 16px; 
+  background-color: #f8fafc;
+  color: #1e293b;
+  font-size: 15px;
+  font-family: inherit;
+  outline: none; 
+  box-sizing: border-box;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.01);
+}
+
+.auth-box input::placeholder {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.auth-box input:focus, 
+.auth-box select:focus {
+  border-color: #3b82f6;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15), 0 10px 20px -5px rgba(15, 23, 42, 0.05);
+  transform: translateY(-2px);
+}
+
+/* --- Bouton de Connexion / Inscription --- */
+.auth-box button { 
+  width: 100%; 
+  padding: 16px; 
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: white; 
+  border: none; 
+  border-radius: 16px; 
+  font-size: 16px;
+  font-weight: 700; 
+  cursor: pointer; 
+  margin-top: 10px;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 8px 15px -5px rgba(37, 99, 235, 0.3);
+}
+
+.auth-box button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 25px -5px rgba(37, 99, 235, 0.4);
+}
+
+.auth-box button:active {
+  transform: scale(0.98);
+}
+
+/* --- Textes et Liens sous le bouton --- */
+.auth-box p { 
+  margin-top: 25px; 
+  font-size: 14px; 
+  color: #64748b; 
+  font-weight: 500;
+}
+
+.auth-box a, 
+.auth-box span.link-style {
+  color: #2563eb;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.auth-box a:hover, 
+.auth-box span.link-style:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}

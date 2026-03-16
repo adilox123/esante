@@ -1,60 +1,81 @@
-// controllers/authController.js
 const User = require('../models/User');
 const Medecin = require('../models/Medecin');
 const Patient = require('../models/Patient');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const sequelize = require('../config/db'); // Import indispensable pour la transaction
 
-console.log('✅ authController chargé');
+console.log('✅ authController avec synchronisation d\'ID chargé');
 
 const authController = {
-  // Inscription
+  // ==========================================
+  // INSCRIPTION (SÉCURISÉE & SYNCHRONISÉE)
+  // ==========================================
   register: async (req, res) => {
+    // On démarre une transaction pour garantir l'intégrité des données
+    const t = await sequelize.transaction(); 
+    
     try {
-      console.log("📝 Tentative d'inscription:", req.body.email);
-      
-      const { nom, prenom, email, role, specialite_id, adresse, telephone, password } = req.body;
+      // 🎯 MODIFICATION ICI : On ajoute les nouveaux champs envoyés par ton étape 2 du Frontend
+      const { 
+        nom, prenom, email, role, specialite_id, adresse, telephone, password, 
+        date_naissance, sexe, groupe_sanguin 
+      } = req.body;
 
-      // Validation
+      // 1. Validation de base
       if (!nom || !prenom || !email || !password) {
+        await t.rollback();
         return res.status(400).json({ message: "Tous les champs sont requis" });
       }
 
-      // Vérifier si l'utilisateur existe
-      const existingUser = await User.findOne({ where: { email } });
+      // 2. Vérifier si l'utilisateur existe déjà
+      const existingUser = await User.findOne({ where: { email } }, { transaction: t });
       if (existingUser) {
+        await t.rollback();
         return res.status(400).json({ message: "Cet email est déjà utilisé" });
       }
 
-      // Hasher le mot de passe
+      // 3. Hasher le mot de passe
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Créer l'utilisateur
+      // 4. CRÉATION DE L'UTILISATEUR
       const user = await User.create({
         nom,
         prenom,
         email,
         password: hashedPassword,
         role: role || 'patient'
-      });
+      }, { transaction: t });
 
-      // Créer le profil selon le rôle
-      if (role === 'medecin') {
+      // 5. CRÉATION DU PROFIL (ID SYNCHRONISÉ)
+      // On force l'ID du profil pour qu'il soit identique à l'ID de l'User
+      if (user.role === 'medecin') {
         await Medecin.create({
-          user_id: user.id,
+          id: user.id,          // ✅ Synchronisation automatique de l'ID
+          user_id: user.id,     // Lien de clé étrangère
           specialite_id,
-          adresse,
-          telephone
-        });
-      } else if (role === 'patient') {
-        await Patient.create({
-          user_id: user.id,
+          adresse: adresse || '',
           telephone: telephone || ''
-        });
+        }, { transaction: t });
+      } else {
+        // Par défaut, on crée un profil patient
+        // 🎯 MODIFICATION ICI : On enregistre toutes les infos médicales dans la BD !
+        await Patient.create({
+          id: user.id,          // ✅ Synchronisation automatique de l'ID
+          user_id: user.id,     // Lien de clé étrangère
+          telephone: telephone || '',
+          adresse: adresse || '',
+          date_naissance: date_naissance || null,
+          sexe: sexe || null,
+          groupe_sanguin: groupe_sanguin || null
+        }, { transaction: t });
       }
 
+      // Si tout est OK, on valide les changements dans la base
+      await t.commit();
+
       res.status(201).json({
-        message: "Inscription réussie",
+        message: "Inscription réussie et profils synchronisés",
         user: {
           id: user.id,
           nom: user.nom,
@@ -65,12 +86,16 @@ const authController = {
       });
 
     } catch (error) {
+      // En cas d'erreur (ex: problème BDD), on annule tout
+      if (t) await t.rollback();
       console.error("❌ Erreur register:", error);
       res.status(500).json({ error: error.message });
     }
   },
 
-  // Connexion
+  // ==========================================
+  // CONNEXION
+  // ==========================================
   login: async (req, res) => {
     try {
       const { email, password } = req.body;
@@ -108,7 +133,9 @@ const authController = {
     }
   },
 
-  // Récupérer les infos utilisateur
+  // ==========================================
+  // RÉCUPÉRER INFOS UTILISATEUR
+  // ==========================================
   getUserInfo: async (req, res) => {
     try {
       const { id } = req.params;

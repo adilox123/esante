@@ -5,7 +5,9 @@ const Medecin = require('./Medecin');
 const Specialite = require('./Specialite');
 const RendezVous = require('./RendezVous');
 const Message = require('./Message');
-const Payment = require('./Payment'); // ← AJOUTER CETTE LIGNE
+const Payment = require('./Payment'); 
+const Document = require('./Document');
+const Absence = require('./Absence'); // ← IMPORT ABSENCE
 
 console.log('✅ Modèles chargés:', {
   User: !!User,
@@ -14,10 +16,12 @@ console.log('✅ Modèles chargés:', {
   Specialite: !!Specialite,
   RendezVous: !!RendezVous,
   Message: !!Message,
-  Payment: !!Payment  // ← Vérifier que Payment est chargé
+  Payment: !!Payment,
+  Document: !!Document,
+  Absence: !!Absence // ← Vérifier Absence
 });
 
-// Un message appartient à un expéditeur (User)
+// --- Relations Messages ---
 Message.belongsTo(User, { 
   foreignKey: 'expediteur_id', 
   as: 'expediteur' 
@@ -26,37 +30,51 @@ User.hasMany(Message, {
   foreignKey: 'expediteur_id' 
 });
 
-// Un message appartient à un rendez-vous
 Message.belongsTo(RendezVous, { 
   foreignKey: 'rendez_vous_id', 
   as: 'rendez_vous' 
 });
-// Un rendez-vous peut contenir plusieurs messages
 RendezVous.hasMany(Message, { 
   foreignKey: 'rendez_vous_id', 
   as: 'messages' 
 });
 
-// Relations User - Patient
+// --- Relations User / Patient / Medecin ---
 User.hasOne(Patient, { foreignKey: 'user_id', as: 'patient' });
 Patient.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
-// Relations User - Medecin (SANS ALIAS pour User)
 User.hasOne(Medecin, { foreignKey: 'user_id' });
 Medecin.belongsTo(User, { foreignKey: 'user_id' });
 
-// Relations Medecin - Specialite (AVEC ALIAS)
+// --- Relations Specialite ---
 Medecin.belongsTo(Specialite, { foreignKey: 'specialite_id', as: 'specialite' });
 Specialite.hasMany(Medecin, { foreignKey: 'specialite_id', as: 'medecins' });
 
-// Relations RendezVous
+// --- Relations RendezVous ---
 RendezVous.belongsTo(Patient, { foreignKey: 'patient_id' });
-RendezVous.belongsTo(Medecin, { foreignKey: 'medecin_id' });
+Patient.hasMany(RendezVous, { foreignKey: 'patient_id' });
 
-// Relations Payment (optionnel)
+RendezVous.belongsTo(Medecin, { foreignKey: 'medecin_id' });
+Medecin.hasMany(RendezVous, { foreignKey: 'medecin_id' });
+
+// --- Relations Absence ---
+Medecin.hasMany(Absence, { foreignKey: 'medecin_id', as: 'absences' });
+Absence.belongsTo(Medecin, { foreignKey: 'medecin_id' });
+
+// --- Relations Payment ---
 Payment.belongsTo(Patient, { foreignKey: 'patient_id' });
 Payment.belongsTo(Medecin, { foreignKey: 'medecin_id' });
 Payment.belongsTo(RendezVous, { foreignKey: 'rendezvous_id' });
+
+// --- Relations Patient - Document ---
+Patient.hasMany(Document, { 
+  foreignKey: 'patient_id', 
+  as: 'documents' 
+});
+Document.belongsTo(Patient, { 
+  foreignKey: 'patient_id', 
+  as: 'patient' 
+});
 
 module.exports = {
   User,
@@ -65,5 +83,7 @@ module.exports = {
   Specialite,
   RendezVous,
   Message,
-  Payment  // ← EXPORTER Payment AUSSI
+  Payment,
+  Document,
+  Absence // ← EXPORTER Absence
 };

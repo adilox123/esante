@@ -36,6 +36,13 @@ const Medecin = sequelize.define('Medecin', {
   code_postal: {
     type: DataTypes.STRING
   }
+  // 🎯 NOUVEAU : Ajout de la colonne tarif pour faire le lien avec MySQL
+  ,tarif: {
+    type: DataTypes.INTEGER,
+    defaultValue: 200 // Un tarif par défaut au cas où
+  }
+
+
 }, {
   tableName: 'medecins',
   timestamps: true,

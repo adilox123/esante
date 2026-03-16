@@ -6,6 +6,9 @@ const PaymentMethods = ({ amount, onPaymentComplete }) => {
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [showCardForm, setShowCardForm] = useState(false);
   const [showPaypalForm, setShowPaypalForm] = useState(false);
+  // 🎯 NOUVEAU : État pour afficher la confirmation d'espèce
+  const [showEspeceForm, setShowEspeceForm] = useState(false); 
+  
   const [cardDetails, setCardDetails] = useState({
     cardNumber: '',
     cardName: '',
@@ -17,12 +20,13 @@ const PaymentMethods = ({ amount, onPaymentComplete }) => {
     password: ''
   });
 
+  // 🎯 NOUVEAU : Ajout de l'Espèce dans la liste des méthodes
   const paymentMethods = [
     {
       id: 'card',
       name: 'Carte bancaire',
       icon: '💳',
-      accepted: ['Visa', 'Mastercard', 'American Express']
+      accepted: ['Visa', 'Mastercard', 'Amex']
     },
     {
       id: 'paypal',
@@ -30,17 +34,28 @@ const PaymentMethods = ({ amount, onPaymentComplete }) => {
       icon: '🅿️',
       color: '#003087'
     },
+    {
+      id: 'espece',
+      name: 'Paiement sur place',
+      icon: '💵',
+      accepted: ['Espèce au cabinet']
+    }
   ];
 
   const handleMethodSelect = (method) => {
     setSelectedMethod(method);
+    // On cache tout par défaut
     setShowCardForm(false);
     setShowPaypalForm(false);
+    setShowEspeceForm(false);
     
+    // On affiche seulement celui qui est cliqué
     if (method.id === 'card' || method.id === 'cb') {
       setShowCardForm(true);
     } else if (method.id === 'paypal') {
       setShowPaypalForm(true);
+    } else if (method.id === 'espece') {
+      setShowEspeceForm(true);
     }
   };
 
@@ -58,6 +73,14 @@ const PaymentMethods = ({ amount, onPaymentComplete }) => {
     onPaymentComplete({
       method: 'paypal',
       paypalDetails: paypalDetails,
+      success: true
+    });
+  };
+
+  // 🎯 NOUVEAU : Fonction de validation pour l'espèce
+  const handleEspeceSubmit = () => {
+    onPaymentComplete({
+      method: 'espece',
       success: true
     });
   };
@@ -262,6 +285,26 @@ const PaymentMethods = ({ amount, onPaymentComplete }) => {
               </p>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* 🎯 NOUVEAU : Zone de confirmation pour le paiement en Espèce */}
+      {showEspeceForm && (
+        <div className="espece-form-container" style={{ 
+          textAlign: 'center', padding: '30px', backgroundColor: '#f0fdf4', 
+          border: '1px solid #bbf7d0', borderRadius: '8px', marginTop: '20px' 
+        }}>
+          <h4 style={{ color: '#166534', fontSize: '1.2rem', marginBottom: '10px' }}>Règlement sur place au cabinet</h4>
+          <p style={{ color: '#15803d', marginBottom: '25px', fontSize: '1rem' }}>
+            Vous paierez le montant de <strong>{amount} DH</strong> directement au médecin lors de votre rendez-vous.
+          </p>
+          <button 
+            onClick={handleEspeceSubmit}
+            className="pay-now-btn" 
+            style={{ backgroundColor: '#16a34a', border: 'none', maxWidth: '300px', margin: '0 auto' }}
+          >
+            Confirmer la réservation
+          </button>
         </div>
       )}
     </div>

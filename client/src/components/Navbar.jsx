@@ -11,8 +11,17 @@ export default function Navbar({ onOpenLogin, onOpenRegister }) {
   const role = localStorage.getItem('role'); // Peut être 'patient' ou 'medecin'
 
   const handleLogout = () => {
-    localStorage.clear(); // Efface toutes les données de session
-    navigate('/'); // Redirige vers l'accueil
+    const patientId = localStorage.getItem('userId');
+    
+    // On nettoie le navigateur
+    if (patientId) {
+      localStorage.removeItem(`chat_history_${patientId}`); 
+    }
+    localStorage.removeItem('userId'); 
+    localStorage.removeItem('token'); // Si tu en as un
+    
+    // On redirige vers l'accueil
+    navigate('/'); 
   };
 
   return (

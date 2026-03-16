@@ -62,92 +62,90 @@ export default function AuthModal({ isOpen, onClose, initialMode }) {
     setStep(2);
   };
 
-  // Dans AuthModal.jsx - remplace la partie inscription
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(''); 
+    setSuccess(''); 
+    setIsLoading(true);
 
-// AuthModal.jsx - Version corrigée
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError(''); 
-  setSuccess(''); 
-  setIsLoading(true);
+    try {
+      if (mode === 'login') {
+        // LOGIN
+        const res = await axios.post('http://localhost:5000/api/auth/login', { 
+          email, 
+          password 
+        });
+        
+        localStorage.setItem('token', res.data.token);
+        localStorage.setItem('role', res.data.user.role);
+        localStorage.setItem('userId', res.data.user.id);
+        localStorage.setItem('nom', res.data.user.nom);
+        localStorage.setItem('prenom', res.data.user.prenom);
+        
+        handleClose();
+        navigate(res.data.user.role === 'patient' ? '/dashboard' : '/doctors');
 
-  try {
-    if (mode === 'login') {
-      // LOGIN
-      const res = await axios.post('http://localhost:5000/api/auth/login', { 
-        email, 
-        password 
-      });
-      
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('role', res.data.user.role);
-      localStorage.setItem('userId', res.data.user.id);
-      localStorage.setItem('nom', res.data.user.nom);
-      localStorage.setItem('prenom', res.data.user.prenom);
-      
-      handleClose();
-      navigate(res.data.user.role === 'patient' ? '/dashboard' : '/doctors');
-
-    } else {
-      // REGISTER - ✅ CORRIGÉ
-      
-      // Construction du payload selon le rôle
-      const payload = {
-        nom,
-        prenom,
-        email,
-        password, // Le backend attend 'password' (pas 'mot_de_passe')
-        role
-      };
-      
-      if (role === 'patient') {
-        // Ajouter les champs patient
-        payload.date_naissance = dateNaissance; // Le backend attend peut-être autre chose
-        payload.sexe = sexe;
-        payload.groupe_sanguin = groupeSanguin;
-        // Note: ton backend ne gère pas ces champs actuellement
-        // Il faudra peut-être les ajouter plus tard
       } else {
-        // Médecin - ✅ Ces champs sont bien gérés par le backend
-        payload.specialite_id = parseInt(specialiteId); // Convertir en nombre
-        payload.adresse = adresse;
-        payload.telephone = telephone;
+        // REGISTER
+        
+        // Construction du payload selon le rôle
+        const payload = {
+          nom,
+          prenom,
+          email,
+          password, 
+          role
+        };
+        
+        if (role === 'patient') {
+          // Ajouter les champs patient
+          payload.date_naissance = dateNaissance; 
+          payload.sexe = sexe;
+          payload.groupe_sanguin = groupeSanguin;
+          // 🎯 AJOUT ICI : On envoie aussi l'adresse et le téléphone
+          payload.adresse = adresse;
+          payload.telephone = telephone;
+        } else {
+          // Médecin
+          payload.specialite_id = parseInt(specialiteId); 
+          payload.adresse = adresse;
+          payload.telephone = telephone;
+        }
+
+        console.log("📦 Envoi au backend:", payload);
+
+        const response = await axios.post('http://localhost:5000/api/auth/register', payload);
+        
+        console.log("✅ Réponse:", response.data);
+        
+        setSuccess("Inscription réussie !");
+        setTimeout(() => { 
+          setMode('login'); 
+          setStep(1); 
+          // Réinitialiser
+          setNom('');
+          setPrenom('');
+          setEmail('');
+          setPassword('');
+          setConfirmPassword('');
+          setDateNaissance('');
+          setAdresse('');
+          setTelephone('');
+        }, 1500);
       }
-
-      console.log("📦 Envoi au backend:", payload);
-
-      const response = await axios.post('http://localhost:5000/api/auth/register', payload);
+    } catch (err) {
+      console.error("❌ Erreur complète:", err);
+      console.error("Réponse serveur:", err.response?.data);
       
-      console.log("✅ Réponse:", response.data);
-      
-      setSuccess("Inscription réussie !");
-      setTimeout(() => { 
-        setMode('login'); 
-        setStep(1); 
-        // Réinitialiser
-        setNom('');
-        setPrenom('');
-        setEmail('');
-        setPassword('');
-        setConfirmPassword('');
-        setDateNaissance('');
-        setAdresse('');
-        setTelephone('');
-      }, 1500);
+      setError(
+        err.response?.data?.message || 
+        err.response?.data?.error ||
+        "Une erreur est survenue lors de l'inscription."
+      );
+    } finally {
+      setIsLoading(false);
     }
-  } catch (err) {
-    console.error("❌ Erreur complète:", err);
-    console.error("Réponse serveur:", err.response?.data);
-    
-    setError(
-      err.response?.data?.message || 
-      err.response?.data?.error ||
-      "Une erreur est survenue lors de l'inscription."
-    );
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   return (
     <div className="modal-overlay" onClick={handleClose}>
@@ -256,6 +254,15 @@ const handleSubmit = async (e) => {
                     <option value="B+">B+</option><option value="B-">B-</option>
                     <option value="AB+">AB+</option><option value="AB-">AB-</option>
                   </select>
+                </div>
+                {/* 🎯 AJOUT ICI : Les nouveaux champs pour le Patient */}
+                <div className="input-group">
+                  <label>Numéro de téléphone</label>
+                  <input type="tel" className="modal-input" value={telephone} onChange={(e) => setTelephone(e.target.value)} placeholder="Ex: 0612345678" />
+                </div>
+                <div className="input-group">
+                  <label>Adresse</label>
+                  <input type="text" className="modal-input" value={adresse} onChange={(e) => setAdresse(e.target.value)} placeholder="Votre adresse..." />
                 </div>
               </>
             )}

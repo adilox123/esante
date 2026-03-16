@@ -1,42 +1,80 @@
+/* =========================================
+   NAVBAR GLOBALE (Niveau Ultra-Design)
+   ========================================= */
 .global-navbar {
-  position: sticky; /* Garde la navbar visible lors du scroll */
-  top: 0;           /* La colle tout en haut de l'écran */
-  z-index: 1000;    /* S'assure qu'elle passe au-dessus du reste du contenu */
+  position: sticky;
+  top: 0;
+  z-index: 1000;
   
+  height: 80px; /* Hauteur fixe pour un meilleur contrôle */
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 5%;
-  background-color: white;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); /* Jolie ombre en dessous */
+  padding: 0 10%;
+  
+  /* Glassmorphism de haute précision */
+  background-color: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  
+  /* Bordure supérieure de lumière et bordure inférieure de structure */
+  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.02);
+  
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* --- LOGO AVANCÉ --- */
 .nav-logo a {
-  font-size: 24px;
-  font-weight: 800;
-  color: #0056d2;
+  font-size: 28px;
+  font-weight: 900;
+  color: #0f172a; /* Plus sombre pour le contraste */
   text-decoration: none;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  letter-spacing: -1.5px;
 }
 
+.nav-logo a span {
+  color: #2563eb;
+  transition: all 0.4s ease;
+}
+
+.nav-logo a:hover span {
+  transform: rotate(-10deg) scale(1.1);
+  filter: drop-shadow(0 0 8px rgba(37, 99, 235, 0.4));
+}
+
+/* --- MENU TYPE "PILL" --- */
 .nav-menu {
   display: flex;
-  gap: 30px;
+  gap: 10px; /* Plus serré car on utilise des pastilles au survol */
+  background: rgba(241, 245, 249, 0.5); /* Optionnel: fond léger pour le groupe */
+  padding: 6px;
+  border-radius: 16px;
 }
 
 .nav-link {
   text-decoration: none;
-  color: #1e293b;
-  font-weight: 600;
-  transition: color 0.3s;
+  color: #64748b;
+  font-weight: 700;
+  font-size: 14.5px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
 }
 
+/* Effet de pastille flottante au survol */
 .nav-link:hover {
-  color: #0056d2;
+  color: #2563eb;
+  background-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+  transform: translateY(-1px);
 }
 
+/* --- ACTIONS & BOUTONS PREMIUM --- */
 .nav-actions {
   display: flex;
   align-items: center;
@@ -45,20 +83,78 @@
 
 .btn-text {
   text-decoration: none;
-  color: #1e293b;
-  font-weight: 600;
+  color: #475569;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 10px 15px;
+  border-radius: 10px;
+  transition: all 0.3s ease;
 }
 
+.btn-text:hover {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.03);
+}
+
+/* Bouton "Liquid Glow" */
 .btn-primary {
-  background-color: #0056d2;
+  background: #0f172a; /* Fond très sombre pour le contraste */
   color: white;
-  padding: 10px 24px;
-  border-radius: 8px;
+  padding: 14px 30px;
+  border-radius: 14px;
   text-decoration: none;
-  font-weight: 600;
-  transition: all 0.3s;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.2);
 }
 
 .btn-primary:hover {
-  background-color: #0045a8;
+  background: #2563eb;
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px -5px rgba(37, 99, 235, 0.3);
+}
+
+/* Lueur interne au clic */
+.btn-primary:active {
+  transform: scale(0.97);
+}
+
+/* --- INDICATEUR DE CONNEXION (Petit plus) --- */
+/* Si tu as un nom d'utilisateur, tu peux ajouter cette classe */
+.user-status-pill {
+  background: #ecfdf5;
+  color: #059669;
+  padding: 6px 12px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.user-status-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: #10b981;
+  border-radius: 50%;
+}
+
+/* --- RESPONSIVE OPTIMISÉ --- */
+@media (max-width: 1024px) {
+  .global-navbar { padding: 0 5%; }
+  .nav-menu { gap: 5px; }
+}
+
+@media (max-width: 768px) {
+  .nav-menu { display: none; } /* On cache pour le menu mobile futur */
+  .btn-primary { padding: 12px 20px; font-size: 13px; }
 }

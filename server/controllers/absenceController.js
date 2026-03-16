@@ -1,11 +1,13 @@
-const Absence = require('../models/Absence');
+// 🎯 Utilise l'import global pour éviter les erreurs de redéclaration ou d'initialisation
+const { Absence } = require('../models');
 
+// 1. Ajouter des absences
 exports.addAbsence = async (req, res) => {
   try {
     const { medecin_id, date_debut, date_fin, periode } = req.body;
 
     if (!medecin_id || !date_debut) {
-      return res.status(400).json({ message: "Veuillez fournir une date de début." });
+      return res.status(400).json({ success: false, message: "Données manquantes." });
     }
 
     let currentDate = new Date(date_debut);
@@ -22,14 +24,45 @@ exports.addAbsence = async (req, res) => {
     }
 
     await Absence.bulkCreate(absencesToCreate);
-    
-    const message = absencesToCreate.length > 1 
-      ? `✅ Période de ${absencesToCreate.length} jours bloquée avec succès !`
-      : `✅ Date bloquée avec succès !`;
-
-    res.status(201).json({ message });
+    res.status(201).json({ success: true, message: "Absences enregistrées !" });
   } catch (error) {
-    console.error("Erreur Absence:", error);
-    res.status(500).json({ error: "Erreur lors de l'enregistrement du congé." });
+    console.error("Erreur addAbsence:", error);
+    res.status(500).json({ success: false, error: "Erreur lors de l'enregistrement." });
+  }
+};
+
+// 2. Récupérer les absences
+exports.getAbsencesByMedecin = async (req, res) => {
+  try {
+    const medecinId = req.params.id;
+    const absences = await Absence.findAll({
+      where: { medecin_id: medecinId },
+      order: [['date_absence', 'ASC']]
+    });
+
+    res.status(200).json({ success: true, absences });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// 3. Supprimer une absence
+exports.deleteAbsence = async (req, res) => {
+  try {
+    const { id } = req.params; 
+    
+    // 💡 Vérification : l'id doit être celui de la table 'absences'
+    const result = await Absence.destroy({
+      where: { id: id }
+    });
+
+    if (result) {
+      res.status(200).json({ success: true, message: "Supprimée !" });
+    } else {
+      res.status(404).json({ success: false, message: "Absence non trouvée en BDD." });
+    }
+  } catch (error) {
+    console.error("❌ Erreur serveur suppression:", error);
+    res.status(500).json({ success: false, error: "Erreur serveur." });
   }
 };

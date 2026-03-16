@@ -1,43 +1,60 @@
 require('dotenv').config();
 const express = require('express');
-const http = require('http'); // ✅ Ajouté pour Socket.io
-const { Server } = require('socket.io'); // ✅ Ajouté pour Socket.io
+const http = require('http');
+const { Server } = require('socket.io');
 const cors = require('cors');
-const sequelize = require('./config/db'); 
-const Message = require('./models/Message'); 
+const sequelize = require('./config/db');
+const Message = require('./models/Message');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs'); // Déclaré une seule fois ici
 
 const app = express();
-const server = http.createServer(app); // ✅ Crée le serveur HTTP avec Express
+const server = http.createServer(app);
 
 // ==========================================
 // CONFIGURATION SOCKET.IO
 // ==========================================
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:5173', // URL de votre Front-end
-    methods: ["GET", "POST"]
+    origin: 'http://localhost:5173',
+    methods: ["GET", "POST", "DELETE"],
+    credentials: true
   }
 });
 
-io.on('connection', (socket) => {
-  console.log('⚡ Un utilisateur est connecté au chat :', socket.id);
+app.set('io', io);
 
-  // Rejoindre une discussion spécifique à un RDV
+io.on('connection', (socket) => {
+  console.log('⚡ Utilisateur connecté au chat:', socket.id);
+
   socket.on('join_room', (rendezVousId) => {
-    socket.join(rendezVousId);
-    console.log(`👤 Utilisateur a rejoint le salon : ${rendezVousId}`);
+    const roomId = `room_${rendezVousId}`;
+    socket.join(roomId);
+    console.log(`👤 Socket ${socket.id} a rejoint : ${roomId}`);
   });
 
-  // Envoi d'un message
   socket.on('send_message', async (data) => {
     try {
-      // Sauvegarde du message en BDD (Optionnel ici si fait via API, mais recommandé)
-      // const newMessage = await Message.create(data);
+      const newMessage = await Message.create({
+        contenu: data.contenu,
+        expediteur_id: data.expediteur_id,
+        rendez_vous_id: data.rendez_vous_id,
+        lu: false
+      });
+
+      const [result] = await sequelize.query(
+        `SELECT m.*, u.nom as nom_expediteur 
+          FROM messages m
+          JOIN users u ON m.expediteur_id = u.id
+          WHERE m.id = ?`,
+        { replacements: [newMessage.id], type: sequelize.QueryTypes.SELECT }
+      );
+
+      io.to(`room_${data.rendez_vous_id}`).emit('receive_message', result[0]);
       
-      // Diffusion du message à tout le monde dans le salon du RDV
-      io.to(data.rendez_vous_id).emit('receive_message', data);
     } catch (error) {
-      console.error("Erreur lors de l'envoi du message :", error);
+      console.error("❌ Erreur socket send_message:", error);
     }
   });
 
@@ -47,50 +64,195 @@ io.on('connection', (socket) => {
 });
 
 // ==========================================
-// MIDDLEWARES GLOBAUX
+// MIDDLEWARES
 // ==========================================
-app.use(cors({ origin: 'http://localhost:5173' }));
+app.use(cors({ 
+  origin: 'http://localhost:5173', 
+  credentials: true 
+}));
 app.use(express.json());
+// Cette ligne doit être présente après tes middlewares (cors, json)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// ==========================================
+// CONFIGURATION DE L'UPLOAD (MULTER)
+// ==========================================
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 } 
+});
+
+
 
 // ==========================================
-// DÉCLARATION DES ROUTES
+// IMPORT DE TOUTES LES ROUTES
 // ==========================================
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/medecins', require('./routes/medecinRoutes'));
-app.use('/api/favoris', require('./routes/favoriRoutes'));
-app.use('/api/payments', require('./routes/paymentRoutes'));
-app.use('/api/appointments', require('./routes/appointmentRoutes'));
-app.use('/api/absences', require('./routes/absenceRoutes'));
-app.use('/api/patients', require('./routes/patientRoutes'));
-app.use('/api/messages', require('./routes/messageRoutes'));
+const authRoutes = require('./routes/authRoutes');
+const medecinRoutes = require('./routes/medecinRoutes');
+const patientRoutes = require('./routes/patientRoutes');
+const appointmentRoutes = require('./routes/appointmentRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
+const favoriRoutes = require('./routes/favoriRoutes');
+const absenceRoutes = require('./routes/absenceRoutes');
+const chatbotRoutes = require('./routes/chatbotRoutes');
 
-// ✅ Route pour récupérer l'historique des messages (À créer dans un nouveau fichier de route plus tard)
+// ==========================================
+// UTILISATION DES ROUTES
+// ==========================================
+app.use('/api/auth', authRoutes);
+app.use('/api/medecins', medecinRoutes);
+app.use('/api/patients', patientRoutes);
+app.use('/api/appointments', appointmentRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/favoris', favoriRoutes);
+app.use('/api/absences', absenceRoutes);
+app.use('/api/chatbot', chatbotRoutes);
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ==========================================
+// ROUTES API MESSAGES
+// ==========================================
 app.get('/api/messages/:rendezVousId', async (req, res) => {
   try {
-    const messages = await Message.findAll({
-      where: { rendez_vous_id: req.params.rendezVousId },
-      order: [['createdAt', 'ASC']]
-    });
-    res.json(messages);
+    const rdvId = req.params.rendezVousId;
+    const messages = await sequelize.query(
+      `SELECT m.*, u.nom as nom_expediteur 
+        FROM messages m
+        JOIN users u ON m.expediteur_id = u.id
+        WHERE m.rendez_vous_id = ?
+        ORDER BY m.createdAt ASC`,
+      { replacements: [rdvId], type: sequelize.QueryTypes.SELECT }
+    );
+    res.json({ success: true, messages: messages });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.post('/api/messages', async (req, res) => {
+  try {
+    const { contenu, expediteur_id, rendez_vous_id } = req.body;
+    const newMessage = await Message.create({
+      contenu, expediteur_id, rendez_vous_id, lu: false
+    });
+    const [result] = await sequelize.query(
+      `SELECT m.*, u.nom as nom_expediteur 
+        FROM messages m
+        JOIN users u ON m.expediteur_id = u.id
+        WHERE m.id = ?`,
+      { replacements: [newMessage.id], type: sequelize.QueryTypes.SELECT }
+    );
+    io.to(`room_${rendez_vous_id}`).emit('receive_message', result);
+    res.status(201).json({ success: true, message: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.delete('/api/messages/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [msgData] = await sequelize.query(
+      'SELECT rendez_vous_id FROM messages WHERE id = ?',
+      { replacements: [id], type: sequelize.QueryTypes.SELECT }
+    );
+    if (!msgData) return res.status(404).json({ message: "Message introuvable" });
+    await Message.destroy({ where: { id } });
+    io.to(`room_${msgData.rendez_vous_id}`).emit('message_deleted', id);
+    res.json({ success: true, message: 'Message supprimé' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
 // ==========================================
-// DÉMARRAGE ET SYNCHRONISATION
+// ROUTES DOCUMENTS
+// ==========================================
+
+const DocModel = require('./models/Document');
+app.post('/api/documents/upload', upload.single('document'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: "Aucun fichier reçu." });
+    const fileNameOriginal = req.file.originalname;
+const fileNameSaved = req.file.filename; // Juste le nom : "1773184632077-doc.pdf"
+
+await sequelize.query(
+  `INSERT INTO documents (nom_original, chemin, patient_id, createdAt, updatedAt) 
+   VALUES (?, ?, ?, NOW(), NOW())`,
+  { replacements: [fileNameOriginal, fileNameSaved, patientId] } // On stocke fileNameSaved
+);
+    res.json({ success: true, message: "Fichier sauvegardé !", file: { nom: fileName, chemin: filePath } });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.get('/api/documents/:patientId', async (req, res) => {
+  try {
+    const { patientId } = req.params;
+    const documents = await sequelize.query(
+      `SELECT * FROM documents WHERE patient_id = ? ORDER BY createdAt DESC`,
+      { replacements: [patientId], type: sequelize.QueryTypes.SELECT }
+    );
+    res.json({ success: true, documents });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.delete('/api/documents/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [doc] = await sequelize.query(
+      "SELECT chemin FROM documents WHERE id = ?",
+      { replacements: [id], type: sequelize.QueryTypes.SELECT }
+    );
+    if (!doc) return res.status(404).json({ success: false, message: "Document introuvable." });
+
+    if (fs.existsSync(doc.chemin)) {
+      fs.unlinkSync(doc.chemin);
+    }
+
+    await sequelize.query("DELETE FROM documents WHERE id = ?", { replacements: [id] });
+    res.json({ success: true, message: "Document supprimé avec succès !" });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ==========================================
+// DÉMARRAGE
 // ==========================================
 const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => {
+  console.log(`🚀 Serveur Adil lancé sur port ${PORT}`);
+});
 
-// Une seule synchronisation suffit
-sequelize.sync({ alter: false }) // ✅ Changé à false pour éviter l'erreur de contrainte patients_ibfk_1
-  .then(() => {
-    console.log("✅ Base de données MySQL synchronisée !");
-    // ⚠️ Utiliser 'server.listen' et non 'app.listen' pour Socket.io
-    server.listen(PORT, () => {
-      console.log(`🚀 Serveur E-Santé démarré sur le port ${PORT}`);
-    });
-  })
-  .catch((error) => {
-    console.error("❌ Erreur fatale lors de la synchronisation :", error);
-  });
+
+// Route avec "/patient" (optionnel)
+app.get('/api/documents/patient/:patientId', async (req, res) => {
+  try {
+    const { patientId } = req.params;
+    const documents = await sequelize.query(
+      `SELECT * FROM documents WHERE patient_id = ? ORDER BY createdAt DESC`,
+      { replacements: [patientId], type: sequelize.QueryTypes.SELECT }
+    );
+    res.json({ success: true, documents });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});

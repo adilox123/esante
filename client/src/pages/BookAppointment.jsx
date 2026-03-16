@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FaUserMd, FaMapMarkerAlt, FaPhone, FaEnvelope } from 'react-icons/fa';
+import { FaUserMd, FaMapMarkerAlt, FaPhone, FaEnvelope, FaMoneyBillWave } from 'react-icons/fa'; // 👈 Ajout de FaMoneyBillWave
 import './BookAppointment.css';
 
 export default function BookAppointment() {
@@ -14,7 +14,6 @@ export default function BookAppointment() {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [motif, setMotif] = useState('Consultation générale');
-  const [isSuccess, setIsSuccess] = useState(false);
 
   const availableTimeSlots = [
     '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', 
@@ -58,7 +57,9 @@ export default function BookAppointment() {
       motif: motif,
       medecinNom: medecin.User?.nom,
       medecinPrenom: medecin.User?.prenom,
-      amount: 50
+      // 🎯 LA CORRECTION EST ICI : On envoie le vrai tarif de la BDD !
+      amount: medecin.tarif || 200, 
+      tarif: medecin.tarif || 200 
     };
 
     navigate('/payment', { state: appointmentDetails });
@@ -81,6 +82,8 @@ export default function BookAppointment() {
             <p><FaMapMarkerAlt color="#3182ce" /> {medecin.adresse || "Adresse non renseignée"}</p>
             <p><FaPhone color="#3182ce" /> {medecin.telephone || "Téléphone non renseigné"}</p>
             <p><FaEnvelope color="#3182ce" /> {medecin.User?.email || "Email non renseigné"}</p>
+            {/* 🎯 NOUVEAU : Affichage du tarif pour être transparent avec le patient */}
+            <p><FaMoneyBillWave color="#16a34a" /> <strong style={{color: '#16a34a'}}>Tarif de consultation : {medecin.tarif || 200} DH</strong></p>
           </div>
         </div>
 
@@ -140,7 +143,7 @@ export default function BookAppointment() {
                 cursor: (!date || !time) ? 'not-allowed' : 'pointer'
               }}
             >
-              Passer au paiement 
+              Passer au paiement ({medecin.tarif || 200} DH)
             </button>
           </form>
         </div>
