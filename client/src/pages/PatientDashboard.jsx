@@ -1,119 +1,246 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { 
   FaUser, FaCalendarCheck, FaHistory, FaFolderOpen, 
-  FaUpload, FaTimesCircle, FaIdCard, FaEdit, FaComments, FaCheckCircle 
+  FaUpload, FaTimesCircle, FaIdCard, FaEdit, FaComments, FaCheckCircle, FaStar, FaBell
 } from 'react-icons/fa';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Chat from '../components/chat/Chat'; 
 import './PatientDashboard.css';
 import Chatbot from '../components/Chatbot';
 
+/* ============================================================
+   MODAL AVIS PATIENT
+   ============================================================ */
+const NOTES_LABELS = ['', 'Très mauvais 😞', 'Mauvais 😕', 'Moyen 😐', 'Bien 😊', 'Excellent 🤩'];
+
+function AvisModal({ onClose }) {
+  const [note, setNote]               = useState(0);
+  const [hover, setHover]             = useState(0);
+  const [commentaire, setCommentaire] = useState('');
+  const [submitted, setSubmitted]     = useState(false);
+  const [loading, setLoading]         = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (note === 0) return;
+    try {
+      setLoading(true);
+      const patientId = localStorage.getItem('userId');
+      await axios.post('http://localhost:5000/api/avis/ajouter', { patientId, note, commentaire });
+      setSubmitted(true);
+    } catch (error) {
+      console.error("Erreur lors de l'envoi de l'avis:", error);
+      alert("Une erreur est survenue lors de l'envoi de votre avis.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const displayVal = hover || note;
+
+  return (
+    <div className="pd-modal-overlay" onClick={onClose}>
+      <div className="pd-avis-modal" onClick={e => e.stopPropagation()}>
+        <button className="pd-avis-modal__close" onClick={onClose}>✕</button>
+
+        {submitted ? (
+          <div className="pd-avis-success">
+            <div className="pd-avis-success__orb" />
+            <div className="pd-avis-success__icon">🌟</div>
+            <p className="pd-avis-success__title">Merci pour votre avis !</p>
+            <p className="pd-avis-success__sub">
+              Votre retour nous aide à améliorer la plateforme E-Santé.<br />
+              Nous apprécions votre confiance.
+            </p>
+            <button className="pd-btn pd-btn--primary" onClick={onClose} style={{ marginTop: 8 }}>Fermer</button>
+          </div>
+        ) : (
+          <>
+            <div className="pd-avis-modal__header">
+              <div className="pd-avis-modal__icon">⭐</div>
+              <div>
+                <h3 className="pd-avis-modal__title">Donnez votre avis</h3>
+                <p className="pd-avis-modal__sub">Votre expérience sur la plateforme E-Santé</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="pd-avis-form">
+              <div className="pd-avis-block">
+                <p className="pd-avis-label">Votre note</p>
+                <div className="pd-avis-stars">
+                  {[1,2,3,4,5].map(i => (
+                    <button key={i} type="button"
+                      className={`pd-star-btn ${displayVal >= i ? 'pd-star-btn--active' : ''}`}
+                      onClick={() => setNote(i)}
+                      onMouseEnter={() => setHover(i)}
+                      onMouseLeave={() => setHover(0)}
+                    >★</button>
+                  ))}
+                  {displayVal > 0 && <span className="pd-avis-note-label">{NOTES_LABELS[displayVal]}</span>}
+                </div>
+              </div>
+
+              <div className="pd-avis-block">
+                <p className="pd-avis-label">
+                  Commentaire <span style={{ color: '#94a3b8', fontWeight: 500, textTransform: 'none' }}>(optionnel)</span>
+                </p>
+                <textarea
+                  className="pd-avis-textarea" rows={4}
+                  placeholder="Partagez votre expérience sur la plateforme..."
+                  value={commentaire} onChange={e => setCommentaire(e.target.value)}
+                />
+              </div>
+
+              <div className="pd-avis-actions">
+                <button type="button" className="pd-btn pd-btn--ghost" onClick={onClose}>Annuler</button>
+                <button type="submit"
+                  className={`pd-btn pd-btn--primary ${note === 0 ? 'pd-avis-submit--disabled' : ''}`}
+                  disabled={note === 0 || loading}
+                >
+                  {loading ? <><span className="pd-avis-spinner" /> Envoi...</> : <><span>⭐</span> Envoyer mon avis</>}
+                </button>
+              </div>
+            </form>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   PATIENT DASHBOARD
+   ============================================================ */
 export default function PatientDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState('profil');
-  const [rendezVous, setRendezVous] = useState([]);
-  const [successMessage, setSuccessMessage] = useState(location.state?.message || '');
-  const [activeChat, setActiveChat] = useState(null); 
-  const [documents, setDocuments] = useState([]);
-  const [uploadStatus, setUploadStatus] = useState(null);
-  
-  // États pour les Modals d'annulation de RDV
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [appointmentToCancelId, setAppointmentToCancelId] = useState(null);
 
-  // 🎯 NOUVEAUX ÉTATS : Modal de suppression de document
-  const [showDeleteDocModal, setShowDeleteDocModal] = useState(false);
-  const [docToDeleteId, setDocToDeleteId] = useState(null);
+  const [activeTab, setActiveTab]               = useState('profil');
+  const [rendezVous, setRendezVous]             = useState([]);
+  const [successMessage]                        = useState(location.state?.message || '');
+  const [activeChat, setActiveChat]             = useState(null);
+  const [documents, setDocuments]               = useState([]);
+  const [uploadStatus, setUploadStatus]         = useState(null);
+  const [sidebarExpanded, setSidebarExpanded]   = useState(false);
+  const [showAvisModal, setShowAvisModal]       = useState(false);
+
+  // Cloche notifications
+  const [notifOpen, setNotifOpen]           = useState(false);
+  const [notifications, setNotifications]   = useState([]);
+  const [seenIds, setSeenIds]               = useState(new Set());
+  const notifRef = useRef(null);
+
+  const [showCancelModal, setShowCancelModal]             = useState(false);
+  const [showSuccessModal, setShowSuccessModal]           = useState(false);
+  const [appointmentToCancelId, setAppointmentToCancelId] = useState(null);
+  const [showDeleteDocModal, setShowDeleteDocModal]       = useState(false);
+  const [docToDeleteId, setDocToDeleteId]                 = useState(null);
 
   const [patientInfo, setPatientInfo] = useState({
-    nom: "Chargement...",
-    email: "...",
-    telephone: "Non renseigné",
-    adresse: "Non renseignée",
-    date_naissance: "Non renseignée",
-    groupe_sanguin: "Non renseigné",
-    sexe: "Non renseigné"
+    nom: 'Chargement...', email: '...', telephone: 'Non renseigné',
+    adresse: 'Non renseignée', date_naissance: 'Non renseignée',
+    groupe_sanguin: 'Non renseigné', sexe: 'Non renseigné'
   });
 
   const patientId = localStorage.getItem('userId');
 
-  // Styles pour les Modals
-  const overlayStyle = {
-    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)', display: 'flex',
-    justifyContent: 'center', alignItems: 'center', zIndex: 2000
-  };
-
-  const modalStyle = {
-    backgroundColor: 'white', padding: '30px', borderRadius: '12px',
-    maxWidth: '450px', width: '90%', textAlign: 'center',
-    boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
-  };
-
   useEffect(() => {
-    if (patientId) {
-      // 🎯 ON FAIT DEUX REQUÊTES EN MÊME TEMPS : User ET Patient
-      Promise.all([
-        axios.get(`http://localhost:5000/api/auth/user/${patientId}`),
-        axios.get(`http://localhost:5000/api/patients/profile?userId=${patientId}`).catch(() => ({ data: {} }))
-      ])
-      .then(([userRes, patientRes]) => {
-        const user = userRes.data;
-        const patient = patientRes.data;
-        
-        console.log("📦 Données User reçues:", user);
-        console.log("📦 Données Patient reçues:", patient);
+    if (!patientId) return;
 
-        setPatientInfo({
-          nom: user.nom || "Utilisateur sans nom",
-          email: user.email || "Non renseigné",
-          // On va chercher dans la variable 'patient' que le backend nous envoie !
-          telephone: patient.telephone || "Non renseigné",
-          adresse: patient.adresse || "Non renseignée",
-          date_naissance: patient.date_naissance || "Non renseignée",
-          groupe_sanguin: patient.groupe_sanguin || "Non renseigné",
-          sexe: patient.sexe === 'M' ? 'Homme' : patient.sexe === 'F' ? 'Femme' : "Non renseigné"
-        });
-      })
-      .catch(err => console.log("Erreur profil :", err));
+    Promise.all([
+      axios.get(`http://localhost:5000/api/auth/user/${patientId}`),
+      axios.get(`http://localhost:5000/api/patients/profile?userId=${patientId}`).catch(() => ({ data: {} }))
+    ]).then(([userRes, patientRes]) => {
+      const user = userRes.data, patient = patientRes.data;
+      setPatientInfo({
+        nom:            user.nom            || 'Utilisateur sans nom',
+        email:          user.email          || 'Non renseigné',
+        telephone:      patient.telephone   || 'Non renseigné',
+        adresse:        patient.adresse     || 'Non renseignée',
+        date_naissance: patient.date_naissance || 'Non renseignée',
+        groupe_sanguin: patient.groupe_sanguin || 'Non renseigné',
+        sexe: patient.sexe === 'M' ? 'Homme' : patient.sexe === 'F' ? 'Femme' : 'Non renseigné'
+      });
+    }).catch(err => console.log('Erreur profil :', err));
 
-      // --- Le chargement des RDV reste identique ---
-      axios.get(`http://localhost:5000/api/appointments/patient/${patientId}`)
-        .then(res => {
-          const vraisRdvs = res.data.map(rdv => ({
-            id: rdv.id,
-            medecin: rdv.nom_medecin || `Médecin N°${rdv.medecin_id}`,
-            date: rdv.date_rdv,
-            heure: rdv.heure_rdv,
-            motif: rdv.motif,
-            statut: rdv.statut 
-          }));
-          setRendezVous(vraisRdvs);
-        })
-        .catch(err => console.log("Erreur RDV :", err));
+    axios.get(`http://localhost:5000/api/appointments/patient/${patientId}`)
+      .then(res => {
+        const rdvs = res.data.map(rdv => ({
+          id:        rdv.id,
+          medecinId: rdv.medecin_id,
+          medecin:   rdv.nom_medecin || `Médecin N°${rdv.medecin_id}`,
+          date:      rdv.date_rdv,
+          heure:     rdv.heure_rdv,
+          motif:     rdv.motif,
+          statut:    rdv.statut,
+          tarif:     rdv.tarif || 200,
+        }));
+        setRendezVous(rdvs);
+        buildNotifications(rdvs);
+      }).catch(err => console.log('Erreur RDV :', err));
 
-      fetchDocuments();
-    }
+    fetchDocuments();
   }, [patientId]);
 
+  const buildNotifications = (rdvs) => {
+    const stored = JSON.parse(localStorage.getItem(`pd_seen_${patientId}`) || '[]');
+    const seenSet = new Set(stored);
+    const notifs = rdvs
+      .filter(r => r.statut === 'Confirmé' || r.statut === 'Annulé')
+      .map(r => ({ ...r, _read: seenSet.has(`${r.id}_${r.statut}`) }));
+    setNotifications(notifs);
+    setSeenIds(seenSet);
+  };
+
+  // Fermer dropdown si clic en dehors
   useEffect(() => {
-    if (activeTab === 'documents' && patientId) {
-      fetchDocuments();
+    const handleOut = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false);
+    };
+    document.addEventListener('mousedown', handleOut);
+    return () => document.removeEventListener('mousedown', handleOut);
+  }, []);
+
+  const handleOpenNotif = () => {
+    setNotifOpen(v => !v);
+    if (!notifOpen) {
+      const newSeen = new Set(notifications.map(n => `${n.id}_${n.statut}`));
+      localStorage.setItem(`pd_seen_${patientId}`, JSON.stringify([...newSeen]));
+      setNotifications(prev => prev.map(n => ({ ...n, _read: true })));
+      setSeenIds(newSeen);
     }
+  };
+
+  const unreadCount = notifications.filter(n => !n._read).length;
+
+  // ✅ Redirection vers la page de paiement depuis la notification
+  const handlePayFromNotif = (notif) => {
+    setNotifOpen(false);
+    navigate('/payment', {
+      state: {
+        appointmentId: notif.id,
+        medecinId:  notif.medecinId,
+        patientId,
+        date_rdv:   notif.date,
+        heure_rdv:  notif.heure,
+        motif:      notif.motif,
+        medecinNom: notif.medecin,
+        tarif:      notif.tarif || 200,
+        amount:     notif.tarif || 200,
+      }
+    });
+  };
+
+  useEffect(() => {
+    if (activeTab === 'documents' && patientId) fetchDocuments();
   }, [activeTab, patientId]);
 
   const fetchDocuments = async () => {
     try {
       const res = await axios.get(`http://localhost:5000/api/documents/${patientId}`);
-      if (res.data.success) {
-        setDocuments(res.data.documents);
-      }
-    } catch (err) {
-      console.error("Erreur chargement documents :", err);
-    }
+      if (res.data.success) setDocuments(res.data.documents);
+    } catch (err) { console.error('Erreur chargement documents :', err); }
   };
 
   const handleFileUpload = async (file) => {
@@ -123,204 +250,302 @@ export default function PatientDashboard() {
       return;
     }
     const formData = new FormData();
-    formData.append('file', file); 
+    formData.append('file', file);
     setUploadStatus({ type: 'loading', message: 'Envoi du document...' });
     try {
       const res = await axios.post(
-        `http://localhost:5000/api/appointments/upload-medical/${patientId}`, 
-        formData, 
-        { headers: { 'Content-Type': 'multipart/form-data' } }
+        `http://localhost:5000/api/appointments/upload-medical/${patientId}`,
+        formData, { headers: { 'Content-Type': 'multipart/form-data' } }
       );
       if (res.data.success) {
         setUploadStatus({ type: 'success', message: 'Document médical ajouté avec succès !' });
-        fetchDocuments(); 
+        fetchDocuments();
       }
-    } catch (err) {
-      setUploadStatus({ type: 'error', message: "Erreur lors de l'envoi." });
-    }
+    } catch { setUploadStatus({ type: 'error', message: "Erreur lors de l'envoi." }); }
   };
 
-  // 🎯 LOGIQUE MODAL SUPPRESSION DOCUMENT
-  const handleDeleteFile = (id) => {
-    setDocToDeleteId(id);
-    setShowDeleteDocModal(true);
-  };
-
+  const handleDeleteFile  = (id) => { setDocToDeleteId(id); setShowDeleteDocModal(true); };
   const confirmDeleteFile = async () => {
     try {
-      console.log("🗑️ Suppression du document ID:", docToDeleteId);
-      
-      // 🎯 CORRECTION : On utilise .delete et non .get
       const res = await axios.delete(`http://localhost:5000/api/documents/${docToDeleteId}`);
-      
-      if (res.data.success) {
-        fetchDocuments(); // On rafraîchit la liste
-        console.log("✅ Document supprimé avec succès");
-      }
-      
-      // On ferme TOUJOURS le modal après la réponse
-      setShowDeleteDocModal(false); 
-      
-    } catch (err) {
-      console.error("❌ Erreur lors de la suppression :", err);
-      setShowDeleteDocModal(false);
-      alert("Erreur : Impossible de supprimer le document.");
-    }
+      if (res.data.success) fetchDocuments();
+    } catch { alert('Impossible de supprimer le document.'); }
+    setShowDeleteDocModal(false);
   };
 
-  // --- LOGIQUE MODAL ANNULATION RDV ---
-  const handleCancel = (id) => {
-    setAppointmentToCancelId(id);
-    setShowCancelModal(true);
-  };
-
+  const handleCancel  = (id) => { setAppointmentToCancelId(id); setShowCancelModal(true); };
   const confirmCancel = async () => {
     try {
-      const res = await axios.delete(`http://localhost:5000/api/appointments/${appointmentToCancelId}`);
+      // 🎯 On utilise PUT pour changer le statut en "Annulé" au lieu de DELETE
+      const res = await axios.put(`http://localhost:5000/api/appointments/${appointmentToCancelId}/statut`, { 
+        statut: 'Annulé' 
+      });
+      
       if (res.data.success) {
-        setRendezVous(prev => prev.filter(rdv => rdv.id !== appointmentToCancelId));
+        // 🎯 On met à jour l'affichage avec .map() au lieu de .filter()
+        setRendezVous(prev => prev.map(r => 
+          r.id === appointmentToCancelId ? { ...r, statut: 'Annulé' } : r
+        ));
+        
         setShowCancelModal(false);
         setShowSuccessModal(true);
       }
-    } catch (err) {
-      console.error("Erreur annulation :", err);
-      setShowCancelModal(false);
-      alert("Erreur lors de la suppression du rendez-vous.");
+    } catch (err) { 
+      setShowCancelModal(false); 
+      console.error(err);
+      alert('Erreur lors de l\'annulation du rendez-vous.'); 
     }
   };
 
   const handleEditProfile = () => {
-    const userRole = localStorage.getItem('role');
-    userRole === 'medecin' ? navigate('/edit-profile-medecin') : navigate('/edit-profile');
+    localStorage.getItem('role') === 'medecin'
+      ? navigate('/edit-profile-medecin')
+      : navigate('/edit-profile');
   };
 
-  const rdvsAVenir = rendezVous.filter(r => r.statut === "À venir" || r.statut === "Confirmé");
+  // 🎯 REMPLACE CETTE LIGNE :
+const rdvsAVenir = rendezVous.filter(r => r.statut === 'À venir' || r.statut === 'Confirmé' || r.statut === 'Payé');
+
+  const menuItems = [
+    { id: 'profil',     icon: <FaIdCard />,       label: 'Mes Informations' },
+    { id: 'rdv',        icon: <FaCalendarCheck />, label: 'Mes Rendez-vous' },
+    { id: 'historique', icon: <FaHistory />,       label: 'Mon Historique' },
+    { id: 'documents',  icon: <FaFolderOpen />,    label: 'Mes Documents' },
+  ];
+
+  const getInitials = (name) => {
+    if (!name || name === 'Chargement...') return '?';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
 
   return (
-    <div className="patient-dashboard">
-      <aside className="dashboard-sidebar">
-  
-  {/* 1. 🎯 NOUVEAU : Le bouton Hamburger (les 3 tirets) */}
-  <div className="hamburger-trigger">
-    <span></span>
-    <span></span>
-    <span></span>
-  </div>
+    <div className="pd-root">
 
-  <div className="patient-profile-mini">
-    <div className="avatar-patient">
-      <FaUser size={35} />
-    </div>
-    
-    {/* 2. 🎯 NOUVEAU : Enveloppe les textes pour l'animation de disparition */}
-    <div className="patient-profile-info">
-      <h3>{patientInfo.nom}</h3>
-      <p>Mon Dossier Santé</p>
-    </div>
-  </div>
-
-  <nav className="sidebar-menu">
-    
-    {/* 3. 🎯 NOUVEAU : Icônes isolées et texte dans un span.menu-text */}
-    
-    <button className={`menu-item ${activeTab === 'profil' ? 'active' : ''}`} onClick={() => setActiveTab('profil')}>
-      <div className="menu-icon">
-        <FaIdCard size={20} />
-      </div>
-      <span className="menu-text">Mes Informations</span>
-    </button>
-
-    <button className={`menu-item ${activeTab === 'rdv' ? 'active' : ''}`} onClick={() => setActiveTab('rdv')}>
-      <div className="menu-icon">
-        <FaCalendarCheck size={20} />
-      </div>
-      <span className="menu-text">Mes Rendez-vous</span>
-    </button>
-
-    <button className={`menu-item ${activeTab === 'historique' ? 'active' : ''}`} onClick={() => setActiveTab('historique')}>
-      <div className="menu-icon">
-        <FaHistory size={20} />
-      </div>
-      <span className="menu-text">Mon Historique</span>
-    </button>
-
-    <button className={`menu-item ${activeTab === 'documents' ? 'active' : ''}`} onClick={() => setActiveTab('documents')}>
-      <div className="menu-icon">
-        <FaFolderOpen size={20} />
-      </div>
-      <span className="menu-text">Mes Documents</span>
-    </button>
-
-  </nav>
-</aside>
-
-      <main className="dashboard-content">
-        <div className="dashboard-header">
-          <h1>Bonjour, {patientInfo.nom}</h1>
-          <p>Gérez vos rendez-vous médicaux et vos documents de santé.</p>
-        </div>
-
-        {successMessage && <div className="success-message">✓ {successMessage}</div>}
-
-        {activeTab === 'profil' && (
-          <div className="content-card">
-            <h2><FaIdCard /> Mes Informations Personnelles</h2>
-            <div className="profile-info-grid">
-              <div className="info-group"><label>Nom</label><p>{patientInfo.nom}</p></div>
-              <div className="info-group"><label>Email</label><p>{patientInfo.email}</p></div>
-              <div className="info-group"><label>Téléphone</label><p>{patientInfo.telephone}</p></div>
-              <div className="info-group"><label>Date de naissance</label><p>{patientInfo.date_naissance}</p></div>
-              <div className="info-group"><label>Groupe Sanguin</label><p>{patientInfo.groupe_sanguin}</p></div>
-              <div className="info-group"><label>Adresse</label><p>{patientInfo.adresse}</p></div>
-              <div className="info-group"><label>Sexe</label><p>{patientInfo.sexe}</p></div>
-            </div>
-            <button className="btn-edit-profile" onClick={handleEditProfile}><FaEdit /> Modifier</button>
+      {/* ===== SIDEBAR ===== */}
+      <aside
+        className={`pd-sidebar ${sidebarExpanded ? 'pd-sidebar--open' : ''}`}
+        onMouseEnter={() => setSidebarExpanded(true)}
+        onMouseLeave={() => setSidebarExpanded(false)}
+      >
+        <div className="pd-sidebar__glow" />
+        <div className="pd-sidebar__avatar-wrap">
+          <div className="pd-sidebar__avatar"><span>{getInitials(patientInfo.nom)}</span></div>
+          <div className="pd-sidebar__avatar-info">
+            <span className="pd-sidebar__avatar-name">{patientInfo.nom}</span>
+            <span className="pd-sidebar__avatar-role">Dossier Santé</span>
           </div>
-        )}
+        </div>
+        <div className="pd-sidebar__divider" />
+        <nav className="pd-sidebar__nav">
+          {menuItems.map(item => (
+            <button key={item.id}
+              className={`pd-nav-item ${activeTab === item.id ? 'pd-nav-item--active' : ''}`}
+              onClick={() => setActiveTab(item.id)}
+            >
+              <span className="pd-nav-item__icon">{item.icon}</span>
+              <span className="pd-nav-item__label">{item.label}</span>
+              {activeTab === item.id && <span className="pd-nav-item__dot" />}
+            </button>
+          ))}
+          <button className="pd-nav-item pd-nav-item--avis" onClick={() => setShowAvisModal(true)}>
+            <span className="pd-nav-item__icon"><FaStar /></span>
+            <span className="pd-nav-item__label">Mon Avis</span>
+          </button>
+        </nav>
+        <div className="pd-sidebar__footer">
+          <div className="pd-sidebar__pulse-dot" />
+          <span className="pd-sidebar__footer-label">Système en ligne</span>
+        </div>
+      </aside>
 
-        {activeTab === 'rdv' && (
-          <div className="content-card">
-            <h2><FaCalendarCheck /> Prochains Rendez-vous</h2>
-            <div className="rdv-list">
-              {rdvsAVenir.length === 0 ? (
-                <p style={{textAlign: 'center', color: '#94a3b8', padding: '20px'}}>Aucun rendez-vous prévu.</p>
-              ) : (
-                rdvsAVenir.map(rdv => (
-                  <div key={rdv.id} className="rdv-item">
-                    <div className="rdv-info">
-                      <div className="rdv-date-badge">{rdv.date}<br/><span>{rdv.heure}</span></div>
-                      <div className="rdv-doctor">
-                        <h4>{rdv.medecin}</h4>
-                        <p>Motif : {rdv.motif}</p>
-                      </div>
+      {/* ===== MAIN ===== */}
+      <main className="pd-main">
+        <header className="pd-topbar">
+          <div className="pd-topbar__greeting">
+            <p className="pd-topbar__sub">Tableau de bord patient</p>
+            <h1 className="pd-topbar__title">Bonjour, <span>{patientInfo.nom}</span> 👋</h1>
+          </div>
+          <div className="pd-topbar__actions">
+            <div className="pd-topbar__stat">
+              <span className="pd-topbar__stat-num">{rdvsAVenir.length}</span>
+              <span className="pd-topbar__stat-lbl">RDV à venir</span>
+            </div>
+            <div className="pd-topbar__stat">
+              <span className="pd-topbar__stat-num">{documents.length}</span>
+              <span className="pd-topbar__stat-lbl">Documents</span>
+            </div>
+
+            {/* ===== CLOCHE NOTIFICATIONS ===== */}
+            <div className="pd-notif-wrap" ref={notifRef}>
+              <button
+                className={`pd-notif-bell ${unreadCount > 0 ? 'pd-notif-bell--active' : ''}`}
+                onClick={handleOpenNotif}
+                title="Mes notifications"
+              >
+                <FaBell size={17} />
+                {unreadCount > 0 && <span className="pd-notif-badge">{unreadCount}</span>}
+              </button>
+
+              {notifOpen && (
+                <div className="pd-notif-dropdown">
+                  <div className="pd-notif-dropdown__header">
+                    <div className="pd-notif-dropdown__title">
+                      <FaBell size={13} /> Mes notifications
                     </div>
-                    <div className="rdv-actions">
-                      <button className="btn-chat" onClick={() => setActiveChat(rdv)}>
-                        <FaComments /> Chat
-                      </button>
-                      <button className="btn-cancel" onClick={() => handleCancel(rdv.id)}>
-                        <FaTimesCircle /> Annuler
-                      </button>
-                    </div>
+                    <span className="pd-notif-dropdown__count">{notifications.length}</span>
                   </div>
-                ))
+
+                  <div className="pd-notif-dropdown__glow" />
+
+                  {notifications.length === 0 ? (
+                    <div className="pd-notif-empty">
+                      <span className="pd-notif-empty__icon">🔔</span>
+                      <p>Aucune notification</p>
+                      <small>Vos mises à jour de RDV apparaîtront ici</small>
+                    </div>
+                  ) : (
+                    <div className="pd-notif-list">
+                      {notifications.map((notif, i) => {
+                        const isConfirmed = notif.statut === 'Confirmé';
+                        const isCancelled = notif.statut === 'Annulé';
+                        return (
+                          <div key={notif.id}
+                            className={`pd-notif-item ${isConfirmed ? 'pd-notif-item--confirmed' : ''} ${isCancelled ? 'pd-notif-item--cancelled' : ''}`}
+                            style={{ animationDelay: `${i * 60}ms` }}
+                          >
+                            {/* Icône statut */}
+                            <div className={`pd-notif-item__status-icon ${isConfirmed ? 'pd-notif-item__status-icon--green' : 'pd-notif-item__status-icon--red'}`}>
+                              {isConfirmed ? <FaCheckCircle size={16} /> : <FaTimesCircle size={16} />}
+                            </div>
+
+                            {/* Contenu */}
+                            <div className="pd-notif-item__content">
+                              <p className="pd-notif-item__title">
+                                {isConfirmed ? '✅ Rendez-vous confirmé !' : '❌ Rendez-vous annulé'}
+                              </p>
+                              <p className="pd-notif-item__medecin">Dr. {notif.medecin}</p>
+                              <p className="pd-notif-item__details">
+                                📅 {notif.date} · 🕐 {notif.heure}
+                              </p>
+                              <p className="pd-notif-item__motif">{notif.motif}</p>
+
+                              <span className={`pd-notif-item__badge ${isConfirmed ? 'pd-notif-item__badge--green' : 'pd-notif-item__badge--red'}`}>
+                                {isConfirmed ? 'Confirmé par le médecin' : 'Annulé par le médecin'}
+                              </span>
+
+                              {/* ✅ BOUTON PAIEMENT — RDV Confirmé uniquement */}
+                              {isConfirmed && (
+                                <div className="pd-notif-item__pay">
+                                  <button
+                                    className="pd-notif-pay-btn"
+                                    onClick={() => handlePayFromNotif(notif)}
+                                  >
+                                    <span>💳</span>
+                                    Procéder au paiement
+                                    <span className="pd-notif-pay-btn__arrow">→</span>
+                                  </button>
+                                  <p className="pd-notif-pay-btn__amount">{notif.tarif || 200} DH</p>
+                                </div>
+                              )}
+
+                              {/* Bouton reprendre RDV — RDV Annulé uniquement */}
+                              {isCancelled && (
+                                <p className="pd-notif-item__cta">
+                                  👉 <button onClick={() => { navigate('/doctors'); setNotifOpen(false); }}>
+                                    Reprendre un RDV
+                                  </button>
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <div className="pd-notif-dropdown__footer">
+                    <button onClick={() => { setActiveTab('rdv'); setNotifOpen(false); }}>
+                      Voir mes rendez-vous →
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           </div>
+        </header>
+
+        {successMessage && (
+          <div className="pd-alert pd-alert--success"><FaCheckCircle /> {successMessage}</div>
         )}
 
-        {activeTab === 'historique' && (
-          <div className="content-card">
-            <h2><FaHistory /> Historique Complet</h2>
-            <div className="rdv-list">
-              {rendezVous.map(rdv => (
-                <div key={rdv.id} className="rdv-item">
-                  <div className="rdv-info">
-                    <div className="rdv-date-badge">{rdv.date}<br/><span>{rdv.heure}</span></div>
-                    <div className="rdv-doctor">
-                      <h4>{rdv.medecin}</h4>
-                      <p>Statut : {rdv.statut}</p>
-                    </div>
+        {/* ===== TAB: PROFIL ===== */}
+        {activeTab === 'profil' && (
+          <div className="pd-card pd-fade-in">
+            <div className="pd-card__header">
+              <div className="pd-card__icon-wrap pd-card__icon-wrap--blue"><FaIdCard /></div>
+              <div>
+                <h2 className="pd-card__title">Mes Informations Personnelles</h2>
+                <p className="pd-card__subtitle">Vos données médicales et de contact</p>
+              </div>
+            </div>
+            <div className="pd-info-grid">
+              {[
+                { label: 'Nom',               value: `${patientInfo.prenom || ''} ${patientInfo.nom || ''}`.trim(), icon: '👤', cap: true  },
+                { label: 'Email',             value: patientInfo.email,          icon: '✉️',  cap: false },
+                { label: 'Téléphone',         value: patientInfo.telephone,      icon: '📱',  cap: false },
+                { label: 'Date de naissance', value: patientInfo.date_naissance, icon: '🎂',  cap: false },
+                { label: 'Groupe Sanguin',    value: patientInfo.groupe_sanguin, icon: '🩸',  cap: false },
+                { label: 'Adresse',           value: patientInfo.adresse,        icon: '📍',  cap: true  },
+                { label: 'Sexe',              value: patientInfo.sexe,           icon: '⚕️',  cap: true  },
+              ].map((item, i) => (
+                <div className="pd-info-cell" key={i} style={{ animationDelay: `${i * 60}ms` }}>
+                  <span className="pd-info-cell__emoji">{item.icon}</span>
+                  <div>
+                    <p className="pd-info-cell__label">{item.label}</p>
+                    <p className="pd-info-cell__value" style={{ textTransform: item.cap ? 'capitalize' : 'none' }}>
+                      {item.value || 'Non renseigné'}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button className="pd-btn pd-btn--primary" onClick={handleEditProfile}>
+              <FaEdit /> Modifier mon profil
+            </button>
+          </div>
+        )}
+
+        {/* ===== TAB: RDV ===== */}
+        {activeTab === 'rdv' && (
+          <div className="pd-card pd-fade-in">
+            <div className="pd-card__header">
+              <div className="pd-card__icon-wrap pd-card__icon-wrap--green"><FaCalendarCheck /></div>
+              <div>
+                <h2 className="pd-card__title">Prochains Rendez-vous</h2>
+                <p className="pd-card__subtitle">{rdvsAVenir.length} rendez-vous confirmé(s)</p>
+              </div>
+            </div>
+            <div className="pd-rdv-list">
+              {rdvsAVenir.length === 0 ? (
+                <div className="pd-empty">
+                  <div className="pd-empty__icon">📅</div>
+                  <p className="pd-empty__title">Aucun rendez-vous prévu</p>
+                  <p className="pd-empty__sub">Vos prochains rendez-vous apparaîtront ici.</p>
+                </div>
+              ) : rdvsAVenir.map((rdv, i) => (
+                <div key={rdv.id} className="pd-rdv-card" style={{ animationDelay: `${i * 80}ms` }}>
+                  <div className="pd-rdv-card__date">
+                    <span className="pd-rdv-card__day">{rdv.date}</span>
+                    <span className="pd-rdv-card__time">{rdv.heure}</span>
+                  </div>
+                  <div className="pd-rdv-card__info">
+                    <h4 className="pd-rdv-card__doctor">{rdv.medecin}</h4>
+                    <p className="pd-rdv-card__motif">Motif : {rdv.motif}</p>
+                    <span className="pd-badge pd-badge--active">{rdv.statut}</span>
+                  </div>
+                  <div className="pd-rdv-card__actions">
+                    <button className="pd-btn pd-btn--chat" onClick={() => setActiveChat(rdv)}><FaComments /> Chat</button>
+                    <button className="pd-btn pd-btn--danger" onClick={() => handleCancel(rdv.id)}><FaTimesCircle /> Annuler</button>
                   </div>
                 </div>
               ))}
@@ -328,92 +553,134 @@ export default function PatientDashboard() {
           </div>
         )}
 
+        {/* ===== TAB: HISTORIQUE ===== */}
+        {activeTab === 'historique' && (
+          <div className="pd-card pd-fade-in">
+            <div className="pd-card__header">
+              <div className="pd-card__icon-wrap pd-card__icon-wrap--purple"><FaHistory /></div>
+              <div>
+                <h2 className="pd-card__title">Historique Complet</h2>
+                <p className="pd-card__subtitle">{rendezVous.length} consultations au total</p>
+              </div>
+            </div>
+            <div className="pd-rdv-list">
+              {rendezVous.length === 0 ? (
+                <div className="pd-empty"><div className="pd-empty__icon">📋</div><p className="pd-empty__title">Aucun historique</p></div>
+              ) : rendezVous.map((rdv, i) => (
+                <div key={rdv.id} className="pd-rdv-card pd-rdv-card--history" style={{ animationDelay: `${i * 60}ms` }}>
+                  <div className="pd-rdv-card__date">
+                    <span className="pd-rdv-card__day">{rdv.date}</span>
+                    <span className="pd-rdv-card__time">{rdv.heure}</span>
+                  </div>
+                  <div className="pd-rdv-card__info">
+                    <h4 className="pd-rdv-card__doctor">{rdv.medecin}</h4>
+                    <span className={`pd-badge ${rdv.statut === 'Confirmé' || rdv.statut === 'À venir' ? 'pd-badge--active' : rdv.statut === 'Terminé' ? 'pd-badge--done' : 'pd-badge--cancelled'}`}>{rdv.statut}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ===== TAB: DOCUMENTS ===== */}
         {activeTab === 'documents' && (
-          <div className="content-card">
-            <h2><FaFolderOpen /> Mes Documents</h2>
-            <div className="upload-section-styled">
-              <input type="file" id="file-upload" className="hidden-input" onChange={(e) => handleFileUpload(e.target.files[0])} />
-              <label htmlFor="file-upload" className="upload-cta-button">
-                <FaUpload size={24} /> <span>Cliquez pour uploader un document</span>
+          <div className="pd-card pd-fade-in">
+            <div className="pd-card__header">
+              <div className="pd-card__icon-wrap pd-card__icon-wrap--orange"><FaFolderOpen /></div>
+              <div>
+                <h2 className="pd-card__title">Mes Documents Médicaux</h2>
+                <p className="pd-card__subtitle">{documents.length} fichier(s) enregistré(s)</p>
+              </div>
+            </div>
+            <div className="pd-upload-zone">
+              <input type="file" id="file-upload" className="pd-upload-zone__input" onChange={e => handleFileUpload(e.target.files[0])} />
+              <label htmlFor="file-upload" className="pd-upload-zone__label">
+                <div className="pd-upload-zone__icon"><FaUpload /></div>
+                <p className="pd-upload-zone__title">Déposez votre fichier ici</p>
+                <p className="pd-upload-zone__sub">Format PDF uniquement · Cliquez pour parcourir</p>
               </label>
             </div>
-            {uploadStatus && <div className={`status-message ${uploadStatus.type}`}>{uploadStatus.message}</div>}
-            <div className="doc-grid">
-              {documents.length === 0 ? <p>Aucun document pour le moment.</p> : documents.map(doc => (
-                <div key={doc.id} className="doc-card-item">
-                  <div className="doc-details">
-                    <span className="doc-name">{doc.nom_original}</span>
-                    <span className="doc-date">{new Date(doc.createdAt).toLocaleDateString()}</span>
+            {uploadStatus && (
+              <div className={`pd-alert ${uploadStatus.type === 'success' ? 'pd-alert--success' : uploadStatus.type === 'error' ? 'pd-alert--error' : 'pd-alert--info'}`}>
+                {uploadStatus.message}
+              </div>
+            )}
+            <div className="pd-doc-grid">
+              {documents.length === 0 ? (
+                <div className="pd-empty">
+                  <div className="pd-empty__icon">📂</div>
+                  <p className="pd-empty__title">Aucun document</p>
+                  <p className="pd-empty__sub">Uploadez vos documents médicaux pour y accéder à tout moment.</p>
+                </div>
+              ) : documents.map((doc, i) => (
+                <div key={doc.id} className="pd-doc-card" style={{ animationDelay: `${i * 60}ms` }}>
+                  <div className="pd-doc-card__pdf-icon">PDF</div>
+                  <div className="pd-doc-card__info">
+                    <p className="pd-doc-card__name">{doc.nom_original}</p>
+                    <p className="pd-doc-card__date">{new Date(doc.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                   </div>
-                  <button className="btn-delete-doc" onClick={() => handleDeleteFile(doc.id)}><FaTimesCircle /></button>
+                  <button className="pd-doc-card__delete" onClick={() => handleDeleteFile(doc.id)}><FaTimesCircle /></button>
                 </div>
               ))}
             </div>
           </div>
         )}
 
+        {/* Chat modal */}
         {activeChat && (
-          <div className="chat-modal-overlay">
-            <div className="chat-modal-container">
-              <button className="close-chat" onClick={() => setActiveChat(null)}>✕ Fermer</button>
+          <div className="pd-modal-overlay">
+            <div className="pd-chat-container">
+              <button className="pd-chat-close" onClick={() => setActiveChat(null)}><FaTimesCircle /> Fermer la conversation</button>
               <Chat rendezVousId={activeChat.id} userId={patientId} currentUserName={patientInfo.nom} />
             </div>
           </div>
         )}
       </main>
 
-      {/* --- POPUPS ANNULATION RDV --- */}
+      {/* ===== MODAL AVIS ===== */}
+      {showAvisModal && <AvisModal onClose={() => setShowAvisModal(false)} />}
+
+      {/* ===== MODALS ===== */}
       {showCancelModal && (
-        <div className="modal-overlay" style={overlayStyle}>
-          <div className="modal-content" style={{...modalStyle, borderTop: '5px solid #ef4444'}}>
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ width: '70px', height: '70px', backgroundColor: '#fef2f2', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '0 auto 15px' }}>
-                <FaTimesCircle size={35} color="#ef4444" />
-              </div>
-              <h2 style={{ color: '#1e293b', marginBottom: '10px' }}>Annuler ce rendez-vous ?</h2>
-              <p style={{ color: '#64748b', fontSize: '0.95em' }}>Cette action supprimera définitivement le rendez-vous de votre agenda.</p>
-            </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={confirmCancel} style={{ flex: 1, padding: '12px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Oui, annuler</button>
-              <button onClick={() => setShowCancelModal(false)} style={{ padding: '12px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Garder</button>
+        <div className="pd-modal-overlay">
+          <div className="pd-modal pd-modal--danger">
+            <div className="pd-modal__icon-ring pd-modal__icon-ring--red"><FaTimesCircle size={32} /></div>
+            <h3 className="pd-modal__title">Annuler ce rendez-vous ?</h3>
+            <p className="pd-modal__body">Cette action supprimera définitivement le rendez-vous de votre agenda.</p>
+            <div className="pd-modal__actions">
+              <button className="pd-btn pd-btn--danger" onClick={confirmCancel}>Oui, annuler</button>
+              <button className="pd-btn pd-btn--ghost" onClick={() => setShowCancelModal(false)}>Conserver</button>
             </div>
           </div>
         </div>
       )}
-
-      {/* --- POPUP SUPPRESSION DOCUMENT --- */}
       {showDeleteDocModal && (
-        <div className="modal-overlay" style={overlayStyle}>
-          <div className="modal-content" style={{...modalStyle, borderTop: '5px solid #ef4444'}}>
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ width: '70px', height: '70px', backgroundColor: '#fef2f2', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '0 auto 15px' }}>
-                <FaTimesCircle size={35} color="#ef4444" />
-              </div>
-              <h2 style={{ color: '#1e293b', marginBottom: '10px' }}>Supprimer ce document ?</h2>
-              <p style={{ color: '#64748b', fontSize: '0.95em' }}>Ce fichier sera définitivement retiré de votre dossier médical.</p>
+        <div className="pd-modal-overlay">
+          <div className="pd-modal pd-modal--danger">
+            <div className="pd-modal__icon-ring pd-modal__icon-ring--red"><FaTimesCircle size={32} /></div>
+            <h3 className="pd-modal__title">Supprimer ce document ?</h3>
+            <p className="pd-modal__body">Ce fichier sera définitivement retiré de votre dossier médical.</p>
+            <div className="pd-modal__actions">
+              <button className="pd-btn pd-btn--danger" onClick={confirmDeleteFile}>Supprimer</button>
+              <button className="pd-btn pd-btn--ghost" onClick={() => setShowDeleteDocModal(false)}>Annuler</button>
             </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={confirmDeleteFile} style={{ flex: 1, padding: '12px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Supprimer</button>
-              <button onClick={() => setShowDeleteDocModal(false)} style={{ padding: '12px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Annuler</button>
+          </div>
+        </div>
+      )}
+      {showSuccessModal && (
+        <div className="pd-modal-overlay">
+          <div className="pd-modal pd-modal--success">
+            <div className="pd-modal__icon-ring pd-modal__icon-ring--green"><FaCheckCircle size={32} /></div>
+            <h3 className="pd-modal__title">C'est fait !</h3>
+            <p className="pd-modal__body">Le rendez-vous a été annulé avec succès.</p>
+            <div className="pd-modal__actions">
+              <button className="pd-btn pd-btn--primary" onClick={() => setShowSuccessModal(false)}>D'accord</button>
             </div>
           </div>
         </div>
       )}
 
-      {showSuccessModal && (
-        <div className="modal-overlay" style={overlayStyle}>
-          <div className="modal-content" style={{...modalStyle, borderTop: '5px solid #10b981'}}>
-            <div style={{ width: '70px', height: '70px', backgroundColor: '#ecfdf5', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '0 auto 15px' }}>
-              <FaCheckCircle size={35} color="#10b981" />
-            </div>
-            <h2 style={{ color: '#1e293b' }}>C'est fait !</h2>
-            <p style={{ color: '#64748b' }}>Le rendez-vous a été annulé avec succès.</p>
-            <button onClick={() => setShowSuccessModal(false)} style={{ marginTop: '20px', padding: '12px', background: '#3182ce', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>D'accord</button>
-          </div>
-        </div>
-      )}
       <Chatbot />
     </div>
-
   );
 }

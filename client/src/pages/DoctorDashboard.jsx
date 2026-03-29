@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { 
   FaUserMd, FaCalendarAlt, FaUserInjured, FaNotesMedical, 
   FaCheckCircle, FaBan, FaSearch, FaSortAmountDown, 
-  FaIdCard, FaEdit, FaComments, FaTimesCircle 
+  FaIdCard, FaEdit, FaComments, FaTimesCircle, FaBell
 } from 'react-icons/fa';
 import Chat from '../components/chat/Chat'; 
 import './DoctorDashboard.css';
@@ -14,6 +14,7 @@ export default function DoctorDashboard() {
   const [activeTab, setActiveTab] = useState('profil');
   const [activeNoteId, setActiveNoteId] = useState(null);
   const [activeChat, setActiveChat] = useState(null);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
 
   const [sortType, setSortType] = useState('date-asc'); 
   const [searchPatient, setSearchPatient] = useState(''); 
@@ -26,11 +27,16 @@ export default function DoctorDashboard() {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [vraiId, setVraiId] = useState(null);
   
-  // 🎯 AJOUT : États pour gérer l'affichage des pop-ups personnalisées
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [absenceToDelete, setAbsenceToDelete] = useState(null);
   const [showAddSuccessModal, setShowAddSuccessModal] = useState(false);
+
+  // ✅ NOUVEAU : États pour la cloche de notifications
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [rdvActionFeedback, setRdvActionFeedback] = useState(null); // { type: 'success'|'error', msg }
+  const notifRef = useRef(null);
 
   const medecinId = localStorage.getItem('userId');
 
@@ -44,37 +50,11 @@ export default function DoctorDashboard() {
 
   const [rendezVous, setRendezVous] = useState([]);
 
-  // Styles pour le Modal
-  const overlayStyle = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 2000
-  };
-
-  const modalStyle = {
-    backgroundColor: 'white',
-    padding: '30px',
-    borderRadius: '12px',
-    maxWidth: '500px',
-    width: '90%',
-    textAlign: 'center',
-    boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
-  };
-
   const fetchAbsences = async (idToFetch) => {
     try {
       const id = idToFetch || medecinId;
       const res = await axios.get(`http://localhost:5000/api/absences/${id}`);
-      if (res.data.success) {
-        setAbsences(res.data.absences);
-      }
+      if (res.data.success) setAbsences(res.data.absences);
     } catch (err) {
       console.error("Erreur lors de la récupération des absences:", err);
     }
@@ -90,7 +70,6 @@ export default function DoctorDashboard() {
     .then(([userRes, medecinRes]) => {
       const user = userRes.data;
       const medecin = medecinRes.data;
-
       setMedecinInfo({
         nom: user.nom || "Utilisateur sans nom",
         email: user.email || "Non renseigné",
@@ -98,19 +77,17 @@ export default function DoctorDashboard() {
         adresse: medecin.adresse || "Non renseignée",
         specialite: medecin.specialite?.nom || "Médecin" 
       });
-
       const vraiMedecinId = medecin.id;
-      
       if (vraiMedecinId) {
         setVraiId(vraiMedecinId);
         fetchAbsences(vraiMedecinId); 
         return axios.get(`http://localhost:5000/api/appointments/medecin/${vraiMedecinId}`);
       } else {
-        throw new Error("ID Médecin introuvable dans la table medecins");
+        throw new Error("ID Médecin introuvable");
       }
     })
     .then(res => {
-      if(res) {
+      if (res) {
         const vraisRdvs = res.data.map(rdv => ({
           id: rdv.id,
           patient_id: rdv.patient_id,
@@ -122,43 +99,89 @@ export default function DoctorDashboard() {
           noteSecrete: rdv.note_secrete,
         }));
         setRendezVous(vraisRdvs);
+
+        // ✅ NOUVEAU : Initialiser les notifications avec les RDV "À venir"
+        const rdvsEnAttente = vraisRdvs.filter(r => r.statut === 'En attente');
+setNotifications(rdvsEnAttente.map(r => ({ ...r, _read: false })));
       }
     })
-    .catch(err => console.error("Erreur chargement profil/RDV/Absences Médecin :", err));
-
+    .catch(err => console.error("Erreur chargement :", err));
   }, [medecinId]);
+
+  // ✅ NOUVEAU : Fermer la cloche si clic en dehors
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // ✅ NOUVEAU : Confirmer un RDV
+  const handleConfirmRdv = async (rdvId) => {
+    try {
+      // 🎯 LA CORRECTION EST SUR CETTE LIGNE : on a ajouté /statut
+      await axios.put(`http://localhost:5000/api/appointments/${rdvId}/statut`, { statut: 'Confirmé' });
+      
+      setRendezVous(prev => prev.map(r => r.id === rdvId ? { ...r, statut: 'Confirmé' } : r));
+      setNotifications(prev => prev.map(n => n.id === rdvId ? { ...n, statut: 'Confirmé', _read: true } : n));
+      setRdvActionFeedback({ type: 'success', msg: '✅ Rendez-vous confirmé avec succès !' });
+      setTimeout(() => setRdvActionFeedback(null), 3000);
+    } catch (err) {
+      console.error(err); // Toujours pratique pour voir l'erreur dans la console !
+      setRdvActionFeedback({ type: 'error', msg: '❌ Erreur lors de la confirmation.' });
+      setTimeout(() => setRdvActionFeedback(null), 3000);
+    }
+  };
+
+  // ✅ NOUVEAU : Annuler un RDV
+  const handleCancelRdv = async (rdvId) => {
+    try {
+      // 🎯 ON AJOUTE /statut ICI AUSSI :
+      await axios.put(`http://localhost:5000/api/appointments/${rdvId}/statut`, { statut: 'Annulé' });
+      
+      setRendezVous(prev => prev.map(r => r.id === rdvId ? { ...r, statut: 'Annulé' } : r));
+      
+      // On retire la notification de la liste puisqu'elle est traitée
+      setNotifications(prev => prev.filter(n => n.id !== rdvId));
+      
+      setRdvActionFeedback({ type: 'success', msg: '🗑️ Rendez-vous annulé.' });
+      setTimeout(() => setRdvActionFeedback(null), 3000);
+    } catch (err) {
+      console.error("Erreur annulation:", err);
+      setRdvActionFeedback({ type: 'error', msg: '❌ Erreur lors de l\'annulation.' });
+      setTimeout(() => setRdvActionFeedback(null), 3000);
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n._read).length;
 
   const handleViewDetails = async (rdv) => {
     const patientId = rdv.patient_id;
-    if (!patientId) {
-      alert("Impossible de trouver l'ID du patient");
-      return;
-    }
+    if (!patientId) { alert("Impossible de trouver l'ID du patient"); return; }
     try {
       const res = await axios.get(`http://localhost:5000/api/documents/${patientId}`);
       const documents = res.data.success ? res.data.documents : [];
-      const patientData = {
+      setSelectedPatient({
         nomComplet: rdv.patient,
         statut: rdv.statut,
         motif: rdv.motif,
         date: rdv.date,
         heure: rdv.heure,
         fichiers: documents
-      };
-      setSelectedPatient(patientData);
+      });
       setIsModalOpen(true);
     } catch (error) {
       console.error("Erreur chargement documents:", error);
-      alert("Erreur lors du chargement des documents");
     }
   };
 
-  const handleEditProfile = () => {
-    navigate('/edit-profile-medecin');
-  };
+  const handleEditProfile = () => navigate('/edit-profile-medecin');
 
   const sortedRdv = [...rendezVous]
-    .filter(r => r.statut === "À venir" || r.statut === "Confirmé") 
+    .filter(r => r.statut === "À venir" || r.statut === "Confirmé" || r.statut === "Payé")
     .sort((a, b) => {
       if (sortType === 'date-asc') return new Date(a.date) - new Date(b.date);
       if (sortType === 'date-desc') return new Date(b.date) - new Date(a.date);
@@ -167,9 +190,7 @@ export default function DoctorDashboard() {
     });
 
   const filteredHistory = [...rendezVous]
-    .filter(r => 
-      r.patient.toLowerCase().includes(searchPatient.toLowerCase())
-    )
+    .filter(r => r.patient.toLowerCase().includes(searchPatient.toLowerCase()))
     .sort((a, b) => {
       if (sortType === 'date-asc') return new Date(a.date) - new Date(b.date);
       if (sortType === 'date-desc') return new Date(b.date) - new Date(a.date);
@@ -179,15 +200,11 @@ export default function DoctorDashboard() {
 
   const handleSaveNote = async (id, text) => {
     try {
-      await axios.put(`http://localhost:5000/api/appointments/${id}/note`, {
-        note_secrete: text
-      });
-      const newData = rendezVous.map(rdv => rdv.id === id ? { ...rdv, noteSecrete: text } : rdv);
-      setRendezVous(newData);
+      await axios.put(`http://localhost:5000/api/appointments/${id}/note`, { note_secrete: text });
+      setRendezVous(rendezVous.map(rdv => rdv.id === id ? { ...rdv, noteSecrete: text } : rdv));
       setActiveNoteId(null);
-      alert("🔒 Note secrète enregistrée définitivement !");
+      alert("🔒 Note secrète enregistrée !");
     } catch (err) {
-      console.error(err);
       alert("❌ Erreur serveur lors de la sauvegarde.");
     }
   };
@@ -195,141 +212,293 @@ export default function DoctorDashboard() {
   const handleSaveAbsence = async () => {
     if (!vraiId) return alert("Erreur : Profil non chargé.");
     if (!dateDebut) return alert("⚠️ Veuillez choisir au moins une date de début !");
-    
     try {
-      const res = await axios.post('http://localhost:5000/api/absences', {
+      await axios.post('http://localhost:5000/api/absences', {
         medecin_id: vraiId,
         date_debut: dateDebut,
         date_fin: dateFin || dateDebut,
         periode: periodeAbsence
       });
-      
       setDateDebut('');
       setDateFin('');
       fetchAbsences(vraiId); 
-      
-      // On ouvre la nouvelle pop-up de succès d'ajout !
       setShowAddSuccessModal(true);
-      setTimeout(() => setShowAddSuccessModal(false), 2000); // Se ferme après 2 secondes
-
+      setTimeout(() => setShowAddSuccessModal(false), 2000);
     } catch (err) {
-      console.error(err);
       alert("❌ Erreur serveur lors de la sauvegarde du congé.");
     }
   };
 
-  // 🎯 MODIFICATION : Ouvre la pop-up de confirmation au lieu du window.confirm
   const handleDeleteAbsence = (id) => {
     setAbsenceToDelete(id);
     setShowConfirmModal(true); 
   };
 
-  // 🎯 MODIFICATION : Exécute la suppression et affiche le succès
   const confirmDelete = async () => {
     try {
       const res = await axios.delete(`http://localhost:5000/api/absences/${absenceToDelete}`);
-      
       if (res.data.success) {
         fetchAbsences(vraiId); 
         setShowConfirmModal(false); 
         setShowSuccessModal(true);  
-        
-        // Fait disparaître la pop-up de succès après 2 secondes
         setTimeout(() => setShowSuccessModal(false), 2000);
       }
     } catch (err) {
-      console.error("Erreur suppression front:", err);
       alert("Erreur lors de la suppression de l'absence");
     }
   };
 
-  return (
-    <div className="doctor-dashboard">
-      <aside className="dashboard-sidebar">
-        
-        {/* 1. 🎯 NOUVEAU : Le bouton avec les 3 tirets (Hamburger) */}
-        <div className="hamburger-trigger">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
+  const getInitials = (name) => {
+    if (!name || name === 'Chargement...') return 'Dr';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
 
-        <div className="doctor-profile-mini">
-          <div className="avatar-pro"><FaUserMd size={40} /></div>
-          
-          {/* 2. 🎯 NOUVEAU : On enveloppe le nom pour pouvoir le cacher quand la barre est réduite */}
-          <div className="doctor-profile-info">
-            <h3>{medecinInfo.nom}</h3>
-            <p>Espace Praticien</p>
+  const menuItems = [
+    { id: 'profil',    icon: <FaIdCard />,      label: 'Mes Informations' },
+    { id: 'rdv',       icon: <FaCalendarAlt />,  label: 'Mon Agenda' },
+    { id: 'patients',  icon: <FaUserInjured />,  label: 'Dossiers Patients' },
+    { id: 'absences',  icon: <FaBan />,          label: 'Gérer mes Absences' },
+  ];
+
+  const rdvAVenir = rendezVous.filter(r => r.statut === "À venir" || r.statut === "Confirmé" || r.statut === "Payé");
+
+  return (
+    <div className="dd-root">
+
+      {/* ===== SIDEBAR ===== */}
+      <aside
+        className={`dd-sidebar ${sidebarExpanded ? 'dd-sidebar--open' : ''}`}
+        onMouseEnter={() => setSidebarExpanded(true)}
+        onMouseLeave={() => setSidebarExpanded(false)}
+      >
+        <div className="dd-sidebar__glow" />
+
+        <div className="dd-sidebar__avatar-wrap">
+          <div className="dd-sidebar__avatar">
+            <span>{getInitials(medecinInfo.nom)}</span>
+          </div>
+          <div className="dd-sidebar__avatar-info">
+            <span className="dd-sidebar__avatar-name">{medecinInfo.nom}</span>
+            <span className="dd-sidebar__avatar-role">Espace Praticien</span>
           </div>
         </div>
 
-        <nav className="sidebar-menu">
-          
-          {/* 3. 🎯 NOUVEAU : On ajoute className="menu-icon" sur l'icône, et on enveloppe le texte dans un <span> */}
-          <button className={`menu-item ${activeTab === 'profil' ? 'active' : ''}`} onClick={() => setActiveTab('profil')}>
-            <FaIdCard size={20} className="menu-icon" /> 
-            <span className="menu-text">Mes Informations</span>
-          </button>
-          
-          <button className={`menu-item ${activeTab === 'rdv' ? 'active' : ''}`} onClick={() => setActiveTab('rdv')}>
-            <FaCalendarAlt size={20} className="menu-icon" /> 
-            <span className="menu-text">Mon Agenda</span>
-          </button>
-          
-          <button className={`menu-item ${activeTab === 'patients' ? 'active' : ''}`} onClick={() => setActiveTab('patients')}>
-            <FaUserInjured size={20} className="menu-icon" /> 
-            <span className="menu-text">Dossiers Patients</span>
-          </button>
-          
-          <button className={`menu-item ${activeTab === 'absences' ? 'active' : ''}`} onClick={() => setActiveTab('absences')}>
-            <FaBan size={20} className="menu-icon" /> 
-            <span className="menu-text">Gérer mes Absences</span>
-          </button>
+        <div className="dd-sidebar__divider" />
 
+        <nav className="dd-sidebar__nav">
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              className={`dd-nav-item ${activeTab === item.id ? 'dd-nav-item--active' : ''}`}
+              onClick={() => setActiveTab(item.id)}
+            >
+              <span className="dd-nav-item__icon">{item.icon}</span>
+              <span className="dd-nav-item__label">{item.label}</span>
+              {activeTab === item.id && <span className="dd-nav-item__dot" />}
+            </button>
+          ))}
         </nav>
+
+        <div className="dd-sidebar__footer">
+          <div className="dd-sidebar__pulse-dot" />
+          <span className="dd-sidebar__footer-label">Système en ligne</span>
+        </div>
       </aside>
 
-      <main className="dashboard-content">
-        <div className="dashboard-header">
-          <h1>Bonjour, {medecinInfo.nom}</h1>
-          <p>Voici un résumé de votre activité de consultation.</p>
-        </div>
+      {/* ===== MAIN ===== */}
+      <main className="dd-main">
 
-        {activeTab === 'profil' && (
-          <div className="content-card">
-            <h2><FaIdCard /> Mes Informations Professionnelles</h2>
-            <div className="profile-info-grid">
-              <div className="info-group"><label>Nom </label><p>{medecinInfo.nom}</p></div>
-              <div className="info-group"><label>Email Pro</label><p>{medecinInfo.email}</p></div>
-              <div className="info-group"><label>Téléphone Cabinet</label><p>{medecinInfo.telephone}</p></div>
-              <div className="info-group"><label>Adresse du Cabinet</label><p>{medecinInfo.adresse}</p></div>
-              <div className="info-group"><label>Spécialité</label><p>{medecinInfo.specialite}</p></div>
+        {/* Top bar */}
+        <header className="dd-topbar">
+          <div className="dd-topbar__greeting">
+            <p className="dd-topbar__sub">Tableau de bord médecin</p>
+            <h1 className="dd-topbar__title">Bonjour, Dr. <span>{medecinInfo.nom}</span> 👨‍⚕️</h1>
+          </div>
+          <div className="dd-topbar__actions">
+            <div className="dd-topbar__stat dd-topbar__stat--blue">
+              <span className="dd-topbar__stat-num">{rdvAVenir.length}</span>
+              <span className="dd-topbar__stat-lbl">RDV à venir</span>
             </div>
-            <button className="btn-edit-profile" onClick={handleEditProfile}>
+            <div className="dd-topbar__stat dd-topbar__stat--green">
+              <span className="dd-topbar__stat-num">{rendezVous.length}</span>
+              <span className="dd-topbar__stat-lbl">Total patients</span>
+            </div>
+            <div className="dd-topbar__stat dd-topbar__stat--orange">
+              <span className="dd-topbar__stat-num">{absences.length}</span>
+              <span className="dd-topbar__stat-lbl">Absences</span>
+            </div>
+
+            {/* ✅ NOUVEAU : CLOCHE DE NOTIFICATION */}
+            <div className="dd-notif-wrap" ref={notifRef}>
+              <button
+                className={`dd-notif-bell ${unreadCount > 0 ? 'dd-notif-bell--active' : ''}`}
+                onClick={() => {
+                  setNotifOpen(v => !v);
+                  // Marquer tout comme lu à l'ouverture
+                  if (!notifOpen) setNotifications(prev => prev.map(n => ({ ...n, _read: true })));
+                }}
+                title="Notifications rendez-vous"
+              >
+                <FaBell size={18} />
+                {unreadCount > 0 && (
+                  <span className="dd-notif-badge">{unreadCount}</span>
+                )}
+              </button>
+
+              {/* Dropdown notifications */}
+              {notifOpen && (
+                <div className="dd-notif-dropdown">
+                  <div className="dd-notif-dropdown__header">
+                    <div className="dd-notif-dropdown__title">
+                      <FaBell size={14} />
+                      Rendez-vous en attente
+                    </div>
+                    <span className="dd-notif-dropdown__count">
+                      {notifications.length} RDV
+                    </span>
+                  </div>
+
+                  <div className="dd-notif-dropdown__glow" />
+
+                  {notifications.length === 0 ? (
+                    <div className="dd-notif-empty">
+                      <span className="dd-notif-empty__icon">🎉</span>
+                      <p>Aucune notification</p>
+                      <small>Tous vos rendez-vous sont traités</small>
+                    </div>
+                  ) : (
+                    <div className="dd-notif-list">
+                      {notifications.map((notif, i) => (
+                        <div
+                          key={notif.id}
+                          className={`dd-notif-item ${notif.statut === 'Confirmé' ? 'dd-notif-item--confirmed' : ''}`}
+                          style={{ animationDelay: `${i * 60}ms` }}
+                        >
+                          {/* Avatar patient */}
+                          <div className="dd-notif-item__avatar">
+                            {notif.patient.charAt(0).toUpperCase()}
+                          </div>
+
+                          {/* Infos */}
+                          <div className="dd-notif-item__content">
+                            <p className="dd-notif-item__patient">{notif.patient}</p>
+                            <p className="dd-notif-item__details">
+                              📅 {notif.date} · 🕐 {notif.heure}
+                            </p>
+                            <p className="dd-notif-item__motif">{notif.motif}</p>
+
+                            {notif.statut === 'Confirmé' ? (
+                              <span className="dd-notif-item__confirmed-badge">
+                                <FaCheckCircle size={10} /> Confirmé
+                              </span>
+                            ) : (
+                              /* Boutons Confirmer / Annuler */
+                              <div className="dd-notif-item__actions">
+                                <button
+                                  className="dd-notif-btn dd-notif-btn--confirm"
+                                  onClick={() => handleConfirmRdv(notif.id)}
+                                >
+                                  <FaCheckCircle size={11} /> Confirmer
+                                </button>
+                                <button
+                                  className="dd-notif-btn dd-notif-btn--cancel"
+                                  onClick={() => handleCancelRdv(notif.id)}
+                                >
+                                  <FaTimesCircle size={11} /> Annuler
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="dd-notif-dropdown__footer">
+                    <button onClick={() => { setActiveTab('rdv'); setNotifOpen(false); }}>
+                      Voir tout l'agenda →
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* ✅ NOUVEAU : Toast feedback action RDV */}
+        {rdvActionFeedback && (
+          <div className={`dd-toast dd-toast--${rdvActionFeedback.type}`}>
+            {rdvActionFeedback.msg}
+          </div>
+        )}
+
+        {/* ===== TAB: PROFIL ===== */}
+        {activeTab === 'profil' && (
+          <div className="dd-card dd-fade-in">
+            <div className="dd-card__header">
+              <div className="dd-card__icon-wrap dd-card__icon-wrap--blue"><FaIdCard /></div>
+              <div>
+                <h2 className="dd-card__title">Mes Informations Professionnelles</h2>
+                <p className="dd-card__subtitle">Vos coordonnées et informations de cabinet</p>
+              </div>
+            </div>
+
+            <div className="dd-info-grid">
+              {[
+                { label: 'Nom ',               value: medecinInfo.nom,        icon: '👨‍⚕️' },
+                { label: 'Email Pro',          value: medecinInfo.email,      icon: '✉️' },
+                { label: 'Téléphone Cabinet',  value: medecinInfo.telephone,  icon: '📞' },
+                { label: 'Adresse du Cabinet', value: medecinInfo.adresse,    icon: '🏥' },
+                { label: 'Spécialité',         value: medecinInfo.specialite, icon: '🩺' },
+              ].map((item, i) => (
+                <div className="dd-info-cell" key={i} style={{ animationDelay: `${i * 60}ms` }}>
+                  <span className="dd-info-cell__emoji">{item.icon}</span>
+                  <div>
+                    <p className="dd-info-cell__label">{item.label}</p>
+                    <p className="dd-info-cell__value">{item.value}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button className="dd-btn dd-btn--primary" onClick={handleEditProfile}>
               <FaEdit /> Modifier mes informations
             </button>
           </div>
         )}
 
+        {/* ===== TAB: AGENDA ===== */}
         {activeTab === 'rdv' && (
-          <div className="content-card">
-            <h2 style={{marginBottom:'20px'}}><FaCalendarAlt /> Rendez-vous à venir</h2>
-            <div className="rdv-list">
+          <div className="dd-card dd-fade-in">
+            <div className="dd-card__header">
+              <div className="dd-card__icon-wrap dd-card__icon-wrap--green"><FaCalendarAlt /></div>
+              <div>
+                <h2 className="dd-card__title">Mon Agenda</h2>
+                <p className="dd-card__subtitle">{sortedRdv.length} rendez-vous à venir</p>
+              </div>
+            </div>
+
+            <div className="dd-rdv-list">
               {sortedRdv.length === 0 ? (
-                <p style={{color: '#94a3b8', textAlign: 'center'}}>Aucun rendez-vous à venir.</p>
+                <div className="dd-empty">
+                  <div className="dd-empty__icon">📅</div>
+                  <p className="dd-empty__title">Aucun rendez-vous à venir</p>
+                  <p className="dd-empty__sub">Votre agenda est libre pour le moment.</p>
+                </div>
               ) : (
-                sortedRdv.map(rdv => (
-                  <div key={rdv.id} className="rdv-item">
-                    <div className="rdv-info">
-                      <div className="rdv-time">{rdv.heure}</div>
-                      <div className="rdv-patient">
-                        <h4>{rdv.patient}</h4>
-                        <p>Date : {rdv.date} | Motif : {rdv.motif}</p>
-                      </div>
+                sortedRdv.map((rdv, i) => (
+                  <div key={rdv.id} className="dd-rdv-card" style={{ animationDelay: `${i * 70}ms` }}>
+                    <div className="dd-rdv-card__date">
+                      <span className="dd-rdv-card__day">{rdv.date}</span>
+                      <span className="dd-rdv-card__time">{rdv.heure}</span>
                     </div>
-                    <div className="rdv-actions" style={{display: 'flex', gap: '10px'}}>
-                      <button className="btn-action chat" style={{background: '#0ea5e9'}} onClick={() => setActiveChat(rdv)}>
+                    <div className="dd-rdv-card__info">
+                      <h4 className="dd-rdv-card__patient">{rdv.patient}</h4>
+                      <p className="dd-rdv-card__motif">Motif : {rdv.motif}</p>
+                      <span className="dd-badge dd-badge--active">{rdv.statut}</span>
+                    </div>
+                    <div className="dd-rdv-card__actions">
+                      <button className="dd-btn dd-btn--chat" onClick={() => setActiveChat(rdv)}>
                         <FaComments /> Chat
                       </button>
                     </div>
@@ -340,63 +509,65 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        {activeChat && (
-          <div className="chat-modal-overlay">
-            <div className="chat-modal-container">
-              <button className="close-chat" onClick={() => setActiveChat(null)}>✕ Fermer</button>
-              <Chat 
-                rendezVousId={activeChat.id} 
-                userId={medecinId} 
-                currentUserName={medecinInfo.nom} 
-              />
-            </div>
-          </div>
-        )}
-
+        {/* ===== TAB: PATIENTS ===== */}
         {activeTab === 'patients' && (
-          <div className="content-card">
-            <h2><FaUserInjured /> Dossiers Patients</h2>
-            <div className="patient-controls" style={{marginBottom: '15px', display: 'flex', gap: '10px', alignItems: 'center'}}>
-              <input
-                type="text"
-                placeholder="Rechercher un patient..."
-                value={searchPatient}
-                onChange={e => setSearchPatient(e.target.value)}
-                style={{padding: '10px', flex: 1, borderRadius: '8px', border: '1px solid #e2e8f0'}}
-              />
-              <select value={sortType} onChange={e => setSortType(e.target.value)} style={{padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0'}}>
-                <option value="date-asc">Date asc.</option>
-                <option value="date-desc">Date desc.</option>
+          <div className="dd-card dd-fade-in">
+            <div className="dd-card__header">
+              <div className="dd-card__icon-wrap dd-card__icon-wrap--purple"><FaUserInjured /></div>
+              <div>
+                <h2 className="dd-card__title">Dossiers Patients</h2>
+                <p className="dd-card__subtitle">Historique complet de vos consultations</p>
+              </div>
+            </div>
+
+            <div className="dd-controls">
+              <div className="dd-search">
+                <FaSearch className="dd-search__icon" />
+                <input
+                  type="text"
+                  placeholder="Rechercher un patient..."
+                  value={searchPatient}
+                  onChange={e => setSearchPatient(e.target.value)}
+                  className="dd-search__input"
+                />
+              </div>
+              <select
+                value={sortType}
+                onChange={e => setSortType(e.target.value)}
+                className="dd-select"
+              >
+                <option value="date-asc">Date croissante</option>
+                <option value="date-desc">Date décroissante</option>
                 <option value="nom">Nom patient</option>
               </select>
             </div>
 
-            <h3 style={{marginTop: '30px'}}>Historique des clients</h3>
-            <div className="rdv-list">
+            <div className="dd-rdv-list">
               {filteredHistory.length === 0 ? (
-                <p style={{color: '#94a3b8', textAlign: 'center'}}>Aucun patient trouvé dans l'historique.</p>
+                <div className="dd-empty">
+                  <div className="dd-empty__icon">🔍</div>
+                  <p className="dd-empty__title">Aucun patient trouvé</p>
+                </div>
               ) : (
-                filteredHistory.map(rdv => (
-                  <div key={rdv.id} className="rdv-item past">
-                    <div className="rdv-info">
-                      <div className="rdv-time">{rdv.heure}</div>
-                      <div className="rdv-patient">
-                        <h4>{rdv.patient} <span style={{fontSize: '0.8em', fontWeight: 'normal', color: '#64748b'}}>({rdv.statut})</span></h4>
-                        <p>Date : {rdv.date} | Motif : {rdv.motif}</p>
-                      </div>
+                filteredHistory.map((rdv, i) => (
+                  <div key={rdv.id} className="dd-rdv-card dd-rdv-card--history" style={{ animationDelay: `${i * 60}ms` }}>
+                    <div className="dd-rdv-card__date">
+                      <span className="dd-rdv-card__day">{rdv.date}</span>
+                      <span className="dd-rdv-card__time">{rdv.heure}</span>
                     </div>
-                    <button 
-                      className="btn-view-details" 
-                      onClick={() => handleViewDetails(rdv)}
-                      style={{ padding: '8px 15px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-                    >
-                      Voir détails
-                    </button>
-                    {rdv.noteSecrete && (
-                      <div className="note-secrete" style={{background: '#f8fafc', padding: '10px', borderRadius: '5px', marginTop: '10px', fontSize: '0.9em'}}>
-                        <strong>Note :</strong> <em>{rdv.noteSecrete}</em>
-                      </div>
-                    )}
+                    <div className="dd-rdv-card__info">
+                      <h4 className="dd-rdv-card__patient">{rdv.patient}</h4>
+                      <p className="dd-rdv-card__motif">Motif : {rdv.motif}</p>
+                      <span className={`dd-badge ${
+  rdv.statut === 'Confirmé' || rdv.statut === 'À venir' || rdv.statut === 'Payé' ? 'dd-badge--active' :
+  rdv.statut === 'Terminé' ? 'dd-badge--done' : 'dd-badge--cancelled'
+}`}>{rdv.statut}</span>
+                    </div>
+                    <div className="dd-rdv-card__actions">
+                      <button className="dd-btn dd-btn--view" onClick={() => handleViewDetails(rdv)}>
+                        Voir dossier
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
@@ -404,179 +575,186 @@ export default function DoctorDashboard() {
           </div>
         )}
 
+        {/* ===== TAB: ABSENCES ===== */}
         {activeTab === 'absences' && (
-  <div className="absence-container">
-    
-    {/* 1. CARTE DU FORMULAIRE */}
-    <div className="absence-form-card">
-      <div className="absence-form-header">
-        <h3><FaBan /> Gérer mes Absences</h3>
-        <p>Définissez vos périodes d'indisponibilité pour bloquer la prise de rendez-vous.</p>
-      </div>
-
-      <div className="absence-form-grid">
-        
-        <div className="absence-input-group">
-          <label>Date de début</label>
-          <input 
-            type="date" 
-            className="absence-input"
-            value={dateDebut} 
-            onChange={e => setDateDebut(e.target.value)} 
-          />
-        </div>
-        
-        <div className="absence-input-group">
-          <label>Date de fin</label>
-          <input 
-            type="date" 
-            className="absence-input"
-            value={dateFin} 
-            onChange={e => setDateFin(e.target.value)} 
-          />
-        </div>
-        
-        <div className="absence-input-group">
-          <label>Période</label>
-          <select 
-            className="absence-input"
-            value={periodeAbsence} 
-            onChange={e => setPeriodeAbsence(e.target.value)}
-          >
-            <option>Journée entière</option>
-            <option>Matin</option>
-            <option>Après-midi</option>
-          </select>
-        </div>
-
-        <button className="btn-submit-absence" onClick={handleSaveAbsence}>
-          <FaBan /> <span>Enregistrer l'indisponibilité</span>
-        </button>
-        
-      </div>
-    </div>
-
-    {/* 2. CARTE DE LA LISTE / HISTORIQUE */}
-    <div className="absence-list-card">
-      <h3>Mes absences enregistrées</h3>
-      
-      <div className="doc-grid" style={{ marginTop: '20px' }}> 
-        {absences && absences.length > 0 ? (
-          absences.map(abs => (
-            <div key={abs.id} className="doc-card-item absence-card">
-              <div className="doc-details">
-                <span className="doc-name">
-                  Absence le : {new Date(abs.date_absence).toLocaleDateString('fr-FR')}
-                </span>
-                <span className="doc-date">Période : {abs.periode}</span>
+          <div className="dd-absence-container dd-fade-in">
+            <div className="dd-card">
+              <div className="dd-card__header">
+                <div className="dd-card__icon-wrap dd-card__icon-wrap--red"><FaBan /></div>
+                <div>
+                  <h2 className="dd-card__title">Gérer mes Absences</h2>
+                  <p className="dd-card__subtitle">Bloquez vos périodes d'indisponibilité</p>
+                </div>
               </div>
-              <button className="btn-delete-doc" onClick={() => handleDeleteAbsence(abs.id)}>
-                <FaTimesCircle />
-              </button>
-            </div>
-          ))
-        ) : (
-          /* NOUVEL ÉTAT VIDE (Empty State) */
-          <div className="absence-empty-state">
-            <div className="absence-empty-icon"><FaBan /></div>
-            <p>Aucune absence enregistrée pour le moment.</p>
-          </div>
-        )}
-      </div>
-    </div>
 
-  </div>
-)}
-      </main>
-
-      {/* MODAL DU DOSSIER PATIENT */}
-      {isModalOpen && selectedPatient && (
-        <div className="modal-overlay" style={overlayStyle}>
-          <div className="modal-content" style={modalStyle}>
-            <h2 style={{ color: '#1e293b', marginBottom: '15px' }}>
-              Dossier de {selectedPatient.patient}
-            </h2>
-
-            <div className="patient-details" style={{ textAlign: 'left', fontSize: '0.95em', color: '#334155' }}>
-              <p style={{ margin: '5px 0' }}><strong>Statut :</strong> <span style={{ color: '#3b82f6' }}>{selectedPatient.statut}</span></p>
-              <p style={{ margin: '5px 0' }}><strong>Motif :</strong> {selectedPatient.motif}</p>
-              <p style={{ margin: '5px 0' }}><strong>Date :</strong> {selectedPatient.date} à {selectedPatient.heure}</p>
+              <div className="dd-absence-grid">
+                <div className="dd-field-group">
+                  <label className="dd-field-label">Date de début</label>
+                  <input type="date" className="dd-input" value={dateDebut} onChange={e => setDateDebut(e.target.value)} />
+                </div>
+                <div className="dd-field-group">
+                  <label className="dd-field-label">Date de fin</label>
+                  <input type="date" className="dd-input" value={dateFin} onChange={e => setDateFin(e.target.value)} />
+                </div>
+                <div className="dd-field-group">
+                  <label className="dd-field-label">Période</label>
+                  <select className="dd-input" value={periodeAbsence} onChange={e => setPeriodeAbsence(e.target.value)}>
+                    <option>Journée entière</option>
+                    <option>Matin</option>
+                    <option>Après-midi</option>
+                  </select>
+                </div>
+                <div className="dd-field-group">
+                  <label className="dd-field-label" style={{ opacity: 0 }}>Action</label>
+                  <button className="dd-btn dd-btn--primary dd-btn--full" onClick={handleSaveAbsence}>
+                    <FaBan /> Enregistrer
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div className="document-section" style={{ padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1', marginTop: '15px' }}>
-              <h3 style={{ fontSize: '0.9em', marginBottom: '10px', fontWeight: 'bold' }}>📄 Documents du Dossier</h3>
+            <div className="dd-card">
+              <div className="dd-card__header">
+                <div className="dd-card__icon-wrap dd-card__icon-wrap--orange"><FaNotesMedical /></div>
+                <div>
+                  <h2 className="dd-card__title">Mes absences enregistrées</h2>
+                  <p className="dd-card__subtitle">{absences.length} absence(s) planifiée(s)</p>
+                </div>
+              </div>
 
-              {selectedPatient?.fichiers && selectedPatient.fichiers.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {selectedPatient.fichiers.map((file, index) => (
-                    <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px', background: 'white', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-                      <span style={{ fontSize: '0.85em', color: '#475569' }}>
-                        {file.nom_original} 
-                      </span>
-                      <a
-                        href={`http://localhost:5000/uploads/${file.chemin.replace('uploads/', '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ color: '#2563eb', fontWeight: 'bold', fontSize: '0.85em', textDecoration: 'underline' }}
-                      >
-                        Voir
-                      </a>
+              {absences && absences.length > 0 ? (
+                <div className="dd-absence-list">
+                  {absences.map((abs, i) => (
+                    <div key={abs.id} className="dd-absence-item" style={{ animationDelay: `${i * 60}ms` }}>
+                      <div className="dd-absence-item__icon">🗓️</div>
+                      <div className="dd-absence-item__info">
+                        <p className="dd-absence-item__date">
+                          {new Date(abs.date_absence).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                        </p>
+                        <span className="dd-badge dd-badge--absence">{abs.periode}</span>
+                      </div>
+                      <button className="dd-absence-item__delete" onClick={() => handleDeleteAbsence(abs.id)}>
+                        <FaTimesCircle />
+                      </button>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.85em', fontStyle: 'italic' }}>
-                  Aucun document trouvé dans la table documents.
+                <div className="dd-empty">
+                  <div className="dd-empty__icon">✅</div>
+                  <p className="dd-empty__title">Aucune absence enregistrée</p>
+                  <p className="dd-empty__sub">Vous êtes disponible sans interruption planifiée.</p>
                 </div>
               )}
             </div>
+          </div>
+        )}
 
-            <button
-              onClick={() => setIsModalOpen(false)}
-              style={{ padding: '12px', background: '#64748b', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', marginTop: '20px', width: '100%' }}
-            >
+        {/* Chat modal */}
+        {activeChat && (
+          <div className="dd-modal-overlay">
+            <div className="dd-chat-container">
+              <button className="dd-chat-close" onClick={() => setActiveChat(null)}>
+                <FaTimesCircle /> Fermer la conversation
+              </button>
+              <Chat rendezVousId={activeChat.id} userId={medecinId} currentUserName={medecinInfo.nom} />
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* ===== MODAL DOSSIER PATIENT ===== */}
+      {isModalOpen && selectedPatient && (
+        <div className="dd-modal-overlay">
+          <div className="dd-modal dd-modal--info">
+            <div className="dd-modal__header">
+              <div className="dd-modal__icon-ring dd-modal__icon-ring--blue">
+                <FaUserInjured size={28} />
+              </div>
+              <div>
+                <h3 className="dd-modal__title">Dossier Patient</h3>
+                <p className="dd-modal__subtitle">{selectedPatient.nomComplet}</p>
+              </div>
+            </div>
+
+            <div className="dd-modal__details">
+              <div className="dd-modal__detail-item">
+                <span className="dd-modal__detail-label">Statut</span>
+                <span className="dd-badge dd-badge--active">{selectedPatient.statut}</span>
+              </div>
+              <div className="dd-modal__detail-item">
+                <span className="dd-modal__detail-label">Motif</span>
+                <span className="dd-modal__detail-value">{selectedPatient.motif}</span>
+              </div>
+              <div className="dd-modal__detail-item">
+                <span className="dd-modal__detail-label">Date & Heure</span>
+                <span className="dd-modal__detail-value">{selectedPatient.date} à {selectedPatient.heure}</span>
+              </div>
+            </div>
+
+            <div className="dd-modal__docs">
+              <p className="dd-modal__docs-title">📄 Documents du Dossier</p>
+              {selectedPatient?.fichiers && selectedPatient.fichiers.length > 0 ? (
+                <div className="dd-doc-list">
+                  {selectedPatient.fichiers.map((file, index) => (
+                    <div key={index} className="dd-doc-row">
+                      <div className="dd-doc-row__icon">PDF</div>
+                      <span className="dd-doc-row__name">{file.nom_original}</span>
+                      <a
+                        href={`http://localhost:5000/uploads/${file.chemin.replace('uploads/', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="dd-btn dd-btn--view dd-btn--sm"
+                      >Voir</a>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="dd-modal__no-docs">Aucun document dans ce dossier.</p>
+              )}
+            </div>
+
+            <button className="dd-btn dd-btn--ghost dd-btn--full" onClick={() => setIsModalOpen(false)}>
               Fermer
             </button>
           </div>
         </div>
       )}
 
-      {/* 🎯 AJOUT : Modal de Confirmation de Suppression */}
+      {/* Modals absences */}
       {showConfirmModal && (
-        <div className="modal-overlay" style={overlayStyle}>
-          <div className="modal-content" style={{...modalStyle, borderTop: '5px solid #ef4444'}}>
-            <FaBan size={50} style={{color: '#ef4444', marginBottom: '15px'}} />
-            <h2 style={{color: '#1e293b'}}>Confirmation</h2>
-            <p style={{margin: '15px 0', color: '#64748b'}}>Voulez-vous vraiment supprimer cette absence ?</p>
-            <div style={{display: 'flex', gap: '10px', marginTop: '20px'}}>
-              <button 
-                onClick={() => setShowConfirmModal(false)} 
-                style={{flex: 1, padding: '12px', background: '#e2e8f0', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', color: '#334155'}}
-              >
-                Annuler
-              </button>
-              <button 
-                onClick={confirmDelete} 
-                style={{flex: 1, padding: '12px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold'}}
-              >
-                Supprimer
-              </button>
+        <div className="dd-modal-overlay">
+          <div className="dd-modal dd-modal--danger">
+            <div className="dd-modal__icon-ring dd-modal__icon-ring--red"><FaBan size={28} /></div>
+            <h3 className="dd-modal__title">Supprimer cette absence ?</h3>
+            <p className="dd-modal__body">Cette période d'indisponibilité sera définitivement retirée.</p>
+            <div className="dd-modal__actions">
+              <button className="dd-btn dd-btn--danger" onClick={confirmDelete}>Supprimer</button>
+              <button className="dd-btn dd-btn--ghost" onClick={() => setShowConfirmModal(false)}>Annuler</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 🎯 AJOUT : Modal de Succès */}
       {showSuccessModal && (
-        <div className="modal-overlay" style={overlayStyle}>
-          <div className="modal-content" style={{...modalStyle, borderTop: '5px solid #10b981', maxWidth: '350px'}}>
-            <FaCheckCircle size={50} style={{color: '#10b981', marginBottom: '15px'}} />
-            <h2 style={{color: '#1e293b'}}>Supprimé !</h2>
-            <p style={{color: '#64748b'}}>L'absence a été retirée avec succès.</p>
+        <div className="dd-modal-overlay">
+          <div className="dd-modal dd-modal--success">
+            <div className="dd-modal__icon-ring dd-modal__icon-ring--green"><FaCheckCircle size={28} /></div>
+            <h3 className="dd-modal__title">Absence supprimée !</h3>
+            <p className="dd-modal__body">La période a été retirée de votre agenda.</p>
           </div>
         </div>
       )}
 
+      {showAddSuccessModal && (
+        <div className="dd-modal-overlay">
+          <div className="dd-modal dd-modal--success">
+            <div className="dd-modal__icon-ring dd-modal__icon-ring--green"><FaCheckCircle size={28} /></div>
+            <h3 className="dd-modal__title">Absence enregistrée !</h3>
+            <p className="dd-modal__body">Votre indisponibilité a été ajoutée avec succès.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,6 +6,9 @@ import Navbar from './components/Navbar';
 import AuthModal from './components/AuthModal';
 // App.jsx
 import EditProfileMedecin from './pages/EditProfileMedecin';
+import CentreAide from './pages/Centreaide';
+import Informations from './pages/Informations';
+import AdminDashboard from './pages/AdminDashboard';
 
 
 
@@ -46,6 +49,10 @@ function App() {
         <Route path="/edit-profile" element={<EditProfile />} />
         
         <Route path="/edit-profile-medecin" element={<EditProfileMedecin />} />
+        <Route path="/centre-aide" element={<CentreAide />} />
+        <Route path="/informations" element={<Informations />} />
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        
       </Routes>
     </Router>
   );

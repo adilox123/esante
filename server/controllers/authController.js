@@ -19,7 +19,7 @@ const authController = {
       // 🎯 MODIFICATION ICI : On ajoute les nouveaux champs envoyés par ton étape 2 du Frontend
       const { 
         nom, prenom, email, role, specialite_id, adresse, telephone, password, 
-        date_naissance, sexe, groupe_sanguin 
+        date_naissance,tarif, sexe, groupe_sanguin 
       } = req.body;
 
       // 1. Validation de base
@@ -55,7 +55,8 @@ const authController = {
           user_id: user.id,     // Lien de clé étrangère
           specialite_id,
           adresse: adresse || '',
-          telephone: telephone || ''
+          telephone: telephone || '',
+          tarif: tarif || 0,
         }, { transaction: t });
       } else {
         // Par défaut, on crée un profil patient

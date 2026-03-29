@@ -1,249 +1,578 @@
-/* Chat.css - Style SaaS Premium & Moderne */
+/* ============================================================
+   CHAT — Modern Premium Design
+   E-Santé Design System : Teal / Navy / Sora / DM Sans
+   ============================================================ */
 
-/* =========================================
-   CONTENEUR PRINCIPAL (Style Glass)
-   ========================================= */
-.whatsapp-container {
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --ch-navy:        #0d1b2a;
+  --ch-navy-2:      #1e3a5f;
+  --ch-teal:        #0f766e;
+  --ch-teal-2:      #14b8a6;
+  --ch-teal-soft:   #f0fdfa;
+  --ch-blue:        #2563eb;
+  --ch-green:       #10b981;
+  --ch-red:         #ef4444;
+  --ch-red-soft:    #fee2e2;
+  --ch-white:       #ffffff;
+  --ch-bg:          #f0f4f8;
+  --ch-text-dark:   #0d1b2a;
+  --ch-text-mid:    #334155;
+  --ch-text-light:  #64748b;
+  --ch-border:      #e2e8f0;
+  --ch-shadow-sm:   0 2px 8px rgba(13,27,42,.06);
+  --ch-shadow-md:   0 6px 20px rgba(13,27,42,.1);
+  --ch-shadow-teal: 0 6px 20px rgba(15,118,110,.28);
+  --ch-radius-lg:   20px;
+  --ch-radius-xl:   26px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ============================================================
+   ROOT
+   ============================================================ */
+.ch-root {
   display: flex;
   flex-direction: column;
-  height: 550px; /* Légèrement plus grand pour plus de confort */
-  background: #fdfdfd;
-  /* Dégradé de fond subtil au lieu de l'image doodle */
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
-  border-radius: 24px;
+  height: 560px;
+  background: var(--ch-bg);
+  border-radius: var(--ch-radius-xl);
   overflow: hidden;
-  margin-top: 20px;
+  box-shadow: 0 20px 50px rgba(13,27,42,.14), 0 4px 12px rgba(13,27,42,.06);
+  border: 1px solid var(--ch-border);
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
   position: relative;
-  box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
-/* =========================================
-   EN-TÊTE DU CHAT
-   ========================================= */
-.chat-header {
+/* Subtle background pattern */
+.ch-root::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(15,118,110,.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ============================================================
+   LOADING
+   ============================================================ */
+.ch-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  height: 560px;
+  background: var(--ch-bg);
+  border-radius: var(--ch-radius-xl);
+  font-family: 'DM Sans', sans-serif;
+}
+
+.ch-loading__spinner {
+  width: 36px; height: 36px;
+  border: 3px solid rgba(15,118,110,.15);
+  border-top-color: var(--ch-teal);
+  border-radius: 50%;
+  animation: ch-spin 0.8s linear infinite;
+}
+
+@keyframes ch-spin { to { transform: rotate(360deg); } }
+
+.ch-loading p {
+  font-size: 14px;
+  color: var(--ch-text-light);
+  font-weight: 500;
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.ch-header {
+  background: linear-gradient(135deg, var(--ch-navy) 0%, #142540 100%);
+  padding: 14px 18px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px); /* Effet verre dépoli */
-  color: #0f172a; /* Texte sombre pour plus de professionnalisme */
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  z-index: 10;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  z-index: 2;
 }
 
-.chat-header h3 {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: -0.3px;
+.ch-header__circle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
 }
 
-/* BOUTON FERMER MODERNE */
-.close-button {
-  background: #f1f5f9;
-  border: none;
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
+.ch-header__circle--1 {
+  width: 100px; height: 100px;
+  background: radial-gradient(circle, rgba(20,184,166,.22), transparent 65%);
+  top: -30px; right: -20px;
+}
+
+.ch-header__circle--2 {
+  width: 60px; height: 60px;
+  background: radial-gradient(circle, rgba(37,99,235,.18), transparent 65%);
+  bottom: -15px; left: 30px;
+}
+
+.ch-header__avatar {
+  width: 40px; height: 40px;
+  min-width: 40px;
+  background: linear-gradient(135deg, var(--ch-teal), var(--ch-teal-2));
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #64748b;
-  font-size: 18px;
+  font-size: 19px;
+  box-shadow: var(--ch-shadow-teal);
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+.ch-header__avatar-ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: 15px;
+  border: 1.5px solid rgba(20,184,166,.35);
+  animation: ch-ring-rotate 6s linear infinite;
+}
+
+@keyframes ch-ring-rotate { to { transform: rotate(360deg); } }
+
+.ch-header__info {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.ch-header__title {
+  font-family: 'Sora', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ch-white);
+  letter-spacing: -0.2px;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ch-header__status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: rgba(255,255,255,.45);
+  font-weight: 500;
+}
+
+.ch-status-dot {
+  width: 6px; height: 6px;
+  background: var(--ch-green);
+  border-radius: 50%;
+  animation: ch-pulse 2s infinite;
+}
+
+@keyframes ch-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(16,185,129,.5); }
+  70%  { box-shadow: 0 0 0 5px rgba(16,185,129,.0); }
+  100% { box-shadow: 0 0 0 0 rgba(16,185,129,.0); }
+}
+
+.ch-header__close {
+  width: 30px; height: 30px;
+  border-radius: 9px;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.12);
+  color: rgba(255,255,255,.65);
+  font-size: 13px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
 }
 
-.close-button:hover {
-  background: #fee2e2;
-  color: #ef4444;
-  transform: rotate(90deg); /* Petit effet sympa à la fermeture */
+.ch-header__close:hover {
+  background: rgba(239,68,68,.25);
+  border-color: rgba(239,68,68,.3);
+  color: #fca5a5;
+  transform: rotate(90deg);
 }
 
-/* =========================================
-   ZONE DES MESSAGES
-   ========================================= */
-.messages-area {
+/* ============================================================
+   MESSAGES AREA
+   ============================================================ */
+.ch-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 25px;
+  padding: 18px 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 4px;
+  position: relative;
+  z-index: 1;
 }
 
-/* Scrollbar invisible type macOS */
-.messages-area::-webkit-scrollbar { width: 5px; }
-.messages-area::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+.ch-messages::-webkit-scrollbar { width: 4px; }
+.ch-messages::-webkit-scrollbar-track { background: transparent; }
+.ch-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
-/* =========================================
-   BULLES DE MESSAGE (Style iMessage/SaaS)
-   ========================================= */
-.message-wrapper {
+/* Empty state */
+.ch-empty {
   display: flex;
-  width: 100%;
-  position: relative;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  text-align: center;
+  padding: 40px 20px;
+  gap: 10px;
 }
 
-.my-message-wrapper { justify-content: flex-end; }
-.other-message-wrapper { justify-content: flex-start; }
+.ch-empty__icon { font-size: 44px; opacity: 0.4; }
 
-.message-bubble {
-  max-width: 75%;
-  padding: 12px 18px;
-  position: relative;
-  word-wrap: break-word;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s ease;
-}
-
-.message-bubble:hover { transform: scale(1.01); }
-
-/* Bulle Docteur/Moi (Bleu SaaS) */
-.my-bubble {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  color: white;
-  border-radius: 20px 20px 4px 20px; /* Arrondi asymétrique sans triangle */
-}
-
-/* Bulle Patient (Gris clair/Blanc) */
-.other-bubble {
-  background: white;
-  color: #1e293b;
-  border-radius: 20px 20px 20px 4px;
-  border: 1px solid rgba(226, 232, 240, 0.8);
-}
-
-/* On supprime les triangles ::after et ::before pour un look plus "App" */
-.my-bubble::after, .other-bubble::before { display: none; }
-
-/* =========================================
-   ÉLÉMENTS INTERNES DU MESSAGE
-   ========================================= */
-.message-info {
-  display: block;
-  font-size: 11px;
+.ch-empty__title {
+  font-family: 'Sora', sans-serif;
+  font-size: 15px;
   font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 6px;
-  color: inherit;
-  opacity: 0.8;
+  color: var(--ch-text-mid);
 }
 
-.message-text {
-  margin: 0;
-  font-size: 14.5px;
-  line-height: 1.5;
+.ch-empty__sub {
+  font-size: 13px;
+  color: var(--ch-text-light);
 }
 
-.message-time {
+/* Date separator */
+.ch-date-sep {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 10px;
+}
+
+.ch-date-sep span {
+  flex: 1;
+  height: 1px;
+  background: var(--ch-border);
+}
+
+.ch-date-sep p {
   font-size: 10px;
-  margin-top: 6px;
-  opacity: 0.7;
-  text-align: right;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+  background: var(--ch-bg);
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--ch-border);
 }
 
-/* BOUTON SUPPRIMER (Survol) */
-.delete-btn {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  width: 22px;
-  height: 22px;
-  background: #0f172a;
-  color: white;
-  border: none;
-  border-radius: 50%;
+/* ============================================================
+   MESSAGE ROWS
+   ============================================================ */
+.ch-msg-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 6px;
+  animation: ch-msgIn 0.3s cubic-bezier(0.22,1,.36,1) backwards;
+}
+
+@keyframes ch-msgIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ch-msg-row--me    { flex-direction: row-reverse; }
+.ch-msg-row--other { flex-direction: row; }
+
+/* Sender avatar (others) */
+.ch-msg-avatar {
+  width: 30px; height: 30px;
+  min-width: 30px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--ch-teal-soft), #ccfbf1);
+  border: 1px solid rgba(15,118,110,.15);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ch-teal);
+  font-family: 'Sora', sans-serif;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   BUBBLES
+   ============================================================ */
+.ch-bubble {
+  max-width: 72%;
+  padding: 10px 15px 8px;
+  position: relative;
+  word-break: break-word;
+  transition: transform 0.15s ease;
+}
+
+.ch-bubble:hover { transform: scale(1.01); }
+
+/* Me — teal gradient */
+.ch-bubble--me {
+  background: linear-gradient(135deg, var(--ch-teal), var(--ch-teal-2));
+  color: var(--ch-white);
+  border-radius: 18px 18px 4px 18px;
+  box-shadow: var(--ch-shadow-teal);
+}
+
+/* Other — white card */
+.ch-bubble--other {
+  background: var(--ch-white);
+  color: var(--ch-text-dark);
+  border-radius: 18px 18px 18px 4px;
+  border: 1px solid var(--ch-border);
+  box-shadow: var(--ch-shadow-sm);
+}
+
+/* Sender name */
+.ch-bubble__sender {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 5px;
+  opacity: 0.7;
+}
+
+/* Text */
+.ch-bubble__text {
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* Footer: time + checks */
+.ch-bubble__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.ch-bubble__time {
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+.ch-bubble__check {
+  font-size: 10px;
+  opacity: 0.7;
+  color: #a5f3fc;
+}
+
+/* Delete button */
+.ch-delete-btn {
+  position: absolute;
+  top: -6px; right: -6px;
+  width: 20px; height: 20px;
+  background: var(--ch-navy);
+  color: var(--ch-white);
+  border: 2px solid var(--ch-white);
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 800;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   opacity: 0;
-  transition: 0.3s;
+  transition: all 0.2s ease;
+  line-height: 1;
   z-index: 5;
 }
 
-.message-bubble:hover .delete-btn { opacity: 1; }
+.ch-bubble:hover .ch-delete-btn { opacity: 1; }
 
-/* =========================================
-   ZONE DE SAISIE (Bottom Bar)
-   ========================================= */
-.input-area {
-  background: white;
-  padding: 15px 25px;
+.ch-delete-btn:hover {
+  background: var(--ch-red);
+  transform: scale(1.15);
+}
+
+/* ============================================================
+   INPUT AREA
+   ============================================================ */
+.ch-input-area {
   display: flex;
   align-items: center;
-  gap: 12px;
-  border-top: 1px solid #f1f5f9;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--ch-white);
+  border-top: 1px solid var(--ch-border);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
 }
 
-.whatsapp-input {
+.ch-input {
   flex: 1;
+  padding: 11px 16px;
+  border: 2px solid transparent;
   border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  padding: 12px 18px;
+  background: #f8fafc;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px;
+  color: var(--ch-text-dark);
   outline: none;
-  font-size: 14px;
-  background-color: #f8fafc;
-  transition: all 0.3s ease;
+  transition: all 0.22s ease;
 }
 
-.whatsapp-input:focus {
-  background-color: white;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+.ch-input::placeholder { color: #94a3b8; }
+
+.ch-input:focus {
+  background: var(--ch-white);
+  border-color: var(--ch-teal);
+  box-shadow: 0 0 0 3px rgba(15,118,110,.1);
 }
 
-.whatsapp-send-btn {
-  background: #2563eb;
-  color: white;
+.ch-send-btn {
+  width: 42px; height: 42px;
+  min-width: 42px;
+  border-radius: 13px;
   border: none;
-  border-radius: 12px;
-  width: 44px;
-  height: 44px;
-  cursor: pointer;
+  background: linear-gradient(135deg, var(--ch-teal), var(--ch-teal-2));
+  color: var(--ch-white);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  transition: all 0.22s ease;
+  box-shadow: 0 3px 10px rgba(15,118,110,.28);
 }
 
-.whatsapp-send-btn:hover:not(:disabled) {
-  background: #1d4ed8;
-  transform: translateY(-2px) rotate(-10deg);
+.ch-send-btn:hover:not(:disabled) {
+  transform: scale(1.08) rotate(-8deg);
+  box-shadow: 0 5px 16px rgba(15,118,110,.4);
 }
 
-/* =========================================
-   ANIMATION TYPING & DATE
-   ========================================= */
-.typing-indicator {
-  background: white;
-  padding: 10px 16px;
-  border-radius: 16px;
-  border: 1px solid #f1f5f9;
+.ch-send-btn:disabled {
+  background: #e2e8f0;
+  box-shadow: none;
+  cursor: not-allowed;
 }
 
-.date-separator span {
-  background: white;
-  color: #64748b;
+.ch-send-btn__icon {
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* ============================================================
+   DELETE CONFIRM MODAL
+   ============================================================ */
+.ch-modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(13,27,42,.6);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: ch-fadeIn 0.2s ease;
+}
+
+@keyframes ch-fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.ch-modal {
+  background: var(--ch-white);
+  border-radius: 20px;
+  padding: 30px 26px;
+  max-width: 280px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(13,27,42,.2);
+  animation: ch-scaleIn 0.3s cubic-bezier(0.34,1.56,.64,1);
+  border-top: 3px solid var(--ch-red);
+}
+
+@keyframes ch-scaleIn {
+  from { opacity: 0; transform: scale(0.88); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.ch-modal__icon { font-size: 36px; margin-bottom: 12px; }
+
+.ch-modal__title {
+  font-family: 'Sora', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ch-text-dark);
+  margin-bottom: 7px;
+}
+
+.ch-modal__sub {
+  font-size: 13px;
+  color: var(--ch-text-light);
+  margin-bottom: 22px;
+}
+
+.ch-modal__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.ch-modal__btn {
+  flex: 1;
+  padding: 11px 14px;
+  border-radius: 11px;
+  border: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
   font-weight: 700;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-/* =========================================
+.ch-modal__btn--danger {
+  background: var(--ch-red);
+  color: var(--ch-white);
+  box-shadow: 0 4px 12px rgba(239,68,68,.25);
+}
+
+.ch-modal__btn--danger:hover { background: #dc2626; transform: translateY(-1px); }
+
+.ch-modal__btn--ghost {
+  background: #f1f5f9;
+  color: var(--ch-text-mid);
+  border: 1px solid var(--ch-border);
+}
+
+.ch-modal__btn--ghost:hover { background: #e2e8f0; }
+
+/* ============================================================
    RESPONSIVE
-   ========================================= */
+   ============================================================ */
 @media (max-width: 480px) {
-  .whatsapp-container { height: 450px; border-radius: 0; }
-  .message-bubble { max-width: 85%; }
-  .input-area { padding: 10px 15px; }
+  .ch-root { height: 480px; border-radius: 16px; }
+  .ch-bubble { max-width: 85%; }
+  .ch-input-area { padding: 10px 12px; }
 }

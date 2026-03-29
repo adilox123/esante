@@ -1,6 +1,631 @@
-.auth-container { height: 90vh; display: flex; align-items: center; justify-content: center; background: #f8fafc; }
-.auth-box { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 400px; text-align: center; }
-.auth-box h2 { color: #1e3a8a; margin-bottom: 25px; }
-.auth-box input, .auth-box select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 10px; outline: none; }
-.auth-box button { width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }
-.auth-box p { margin-top: 20px; font-size: 0.9rem; color: #64748b; }
+/* ============================================================
+   REGISTER PAGE — Modern Premium Design
+   Design system E-Santé : Teal / Navy / DM Sans / Sora
+   Différenciation vs Login : steps timeline, role selector
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --rg-navy:        #0d1b2a;
+  --rg-navy-2:      #1e3a5f;
+  --rg-teal:        #0f766e;
+  --rg-teal-2:      #14b8a6;
+  --rg-teal-soft:   #f0fdfa;
+  --rg-blue:        #2563eb;
+  --rg-blue-soft:   #eff6ff;
+  --rg-green:       #10b981;
+  --rg-green-soft:  #d1fae5;
+  --rg-red:         #ef4444;
+  --rg-red-soft:    #fee2e2;
+  --rg-bg:          #eef2f7;
+  --rg-white:       #ffffff;
+  --rg-text-dark:   #0d1b2a;
+  --rg-text-mid:    #334155;
+  --rg-text-light:  #64748b;
+  --rg-border:      #e2e8f0;
+  --rg-shadow-md:   0 8px 30px rgba(13,27,42,.1);
+  --rg-shadow-lg:   0 24px 60px rgba(13,27,42,.15);
+  --rg-shadow-teal: 0 8px 24px rgba(15,118,110,.32);
+  --rg-shadow-blue: 0 8px 24px rgba(37,99,235,.28);
+  --rg-radius-lg:   24px;
+  --rg-radius-xl:   36px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ============================================================
+   ROOT
+   ============================================================ */
+.rg-root {
+  min-height: calc(100vh - 70px);
+  background-color: var(--rg-bg);
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.rg-root::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(15,118,110,.05) 1px, transparent 1px);
+  background-size: 30px 30px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ============================================================
+   ORBS — bleu dominant (différenciation vs Login)
+   ============================================================ */
+.rg-orb {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(90px);
+  z-index: 0;
+}
+
+.rg-orb--1 {
+  width: 480px; height: 480px;
+  background: radial-gradient(circle, rgba(37,99,235,.12), transparent 70%);
+  top: -90px; right: -70px;
+}
+
+.rg-orb--2 {
+  width: 380px; height: 380px;
+  background: radial-gradient(circle, rgba(15,118,110,.14), transparent 70%);
+  bottom: -70px; left: -60px;
+}
+
+.rg-orb--3 {
+  width: 240px; height: 240px;
+  background: radial-gradient(circle, rgba(124,58,237,.06), transparent 70%);
+  top: 45%; right: 38%;
+}
+
+/* ============================================================
+   WRAPPER
+   ============================================================ */
+.rg-wrapper {
+  display: flex;
+  max-width: 1020px;
+  width: 100%;
+  border-radius: var(--rg-radius-xl);
+  overflow: hidden;
+  box-shadow: var(--rg-shadow-lg);
+  position: relative;
+  z-index: 1;
+  animation: rg-scaleIn 0.5s cubic-bezier(0.22,1,.36,1) backwards;
+}
+
+@keyframes rg-scaleIn {
+  from { opacity: 0; transform: scale(0.96) translateY(16px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ============================================================
+   LEFT PANEL
+   ============================================================ */
+.rg-panel-left {
+  flex: 0 0 400px;
+  background: linear-gradient(155deg, var(--rg-navy) 0%, #0d2a3f 55%, #0a1f35 100%);
+  padding: 52px 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.rg-panel-left__circle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.rg-panel-left__circle--1 {
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(37,99,235,.2), transparent 65%);
+  top: -60px; right: -60px;
+}
+
+.rg-panel-left__circle--2 {
+  width: 180px; height: 180px;
+  background: radial-gradient(circle, rgba(15,118,110,.15), transparent 65%);
+  bottom: -40px; left: -40px;
+}
+
+.rg-panel-left__content { position: relative; z-index: 2; }
+
+/* Logo */
+.rg-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 48px;
+}
+
+.rg-logo__icon {
+  width: 42px; height: 42px;
+  background: linear-gradient(135deg, var(--rg-teal), var(--rg-teal-2));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  box-shadow: var(--rg-shadow-teal);
+}
+
+.rg-logo__text {
+  font-family: 'Sora', sans-serif;
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--rg-white);
+  letter-spacing: -0.8px;
+}
+
+/* Title */
+.rg-panel-left__title {
+  font-family: 'Sora', sans-serif;
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--rg-white);
+  line-height: 1.12;
+  letter-spacing: -1.2px;
+  margin-bottom: 18px;
+}
+
+.rg-panel-left__title span {
+  background: linear-gradient(135deg, var(--rg-teal-2), #5eead4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.rg-panel-left__sub {
+  font-size: 14px;
+  color: rgba(255,255,255,.45);
+  line-height: 1.7;
+  margin-bottom: 44px;
+  max-width: 290px;
+}
+
+/* Steps timeline */
+.rg-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+}
+
+/* Vertical line connecting steps */
+.rg-steps::before {
+  content: '';
+  position: absolute;
+  left: 17px;
+  top: 36px;
+  bottom: 36px;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(15,118,110,.5), rgba(20,184,166,.2), transparent);
+}
+
+.rg-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 14px 0;
+  transition: transform 0.2s;
+}
+
+.rg-step:hover { transform: translateX(4px); }
+
+.rg-step__num {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  background: linear-gradient(135deg, var(--rg-teal), var(--rg-teal-2));
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Sora', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--rg-white);
+  box-shadow: 0 4px 12px rgba(15,118,110,.35);
+  position: relative;
+  z-index: 1;
+}
+
+.rg-step__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255,255,255,.9);
+  margin-bottom: 3px;
+}
+
+.rg-step__sub {
+  font-size: 12px;
+  color: rgba(255,255,255,.4);
+  line-height: 1.4;
+}
+
+/* Wave */
+.rg-panel-left__wave {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--rg-teal), var(--rg-teal-2), transparent);
+  z-index: 2;
+}
+
+/* ============================================================
+   RIGHT PANEL
+   ============================================================ */
+.rg-panel-right {
+  flex: 1;
+  background: var(--rg-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 52px 48px;
+}
+
+.rg-form-wrap {
+  width: 100%;
+  max-width: 390px;
+}
+
+/* Form header */
+.rg-form-header { margin-bottom: 28px; }
+
+.rg-form-header__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--rg-green-soft);
+  border: 1px solid rgba(16,185,129,.2);
+  color: var(--rg-green);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  margin-bottom: 16px;
+}
+
+.rg-badge-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--rg-green);
+  border-radius: 50%;
+  animation: rg-pulse 2s infinite;
+}
+
+@keyframes rg-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(16,185,129,.5); }
+  70%  { box-shadow: 0 0 0 5px rgba(16,185,129,0); }
+  100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+}
+
+.rg-form-header__title {
+  font-family: 'Sora', sans-serif;
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--rg-text-dark);
+  letter-spacing: -0.7px;
+  margin-bottom: 6px;
+}
+
+.rg-form-header__sub {
+  font-size: 13px;
+  color: var(--rg-text-light);
+  line-height: 1.5;
+}
+
+/* Alert */
+.rg-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--rg-red-soft);
+  border: 1px solid #fecaca;
+  border-left: 4px solid var(--rg-red);
+  color: #991b1b;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 18px;
+  animation: rg-fadeIn 0.3s ease;
+}
+
+@keyframes rg-fadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   ROLE SELECTOR
+   ============================================================ */
+.rg-role-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 22px;
+  background: #f8fafc;
+  padding: 5px;
+  border-radius: 14px;
+  border: 1px solid var(--rg-border);
+}
+
+.rg-role-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background: transparent;
+  color: var(--rg-text-light);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.rg-role-btn:hover {
+  color: var(--rg-text-dark);
+  background: rgba(255,255,255,.7);
+}
+
+.rg-role-btn__icon { font-size: 18px; }
+
+/* Active — patient (bleu) */
+.rg-role-btn--active {
+  background: var(--rg-white);
+  color: var(--rg-blue);
+  border-color: #bfdbfe;
+  box-shadow: var(--rg-shadow-blue);
+}
+
+/* Active — médecin (teal) */
+.rg-role-btn--active.rg-role-btn--active-teal {
+  color: var(--rg-teal);
+  border-color: rgba(15,118,110,.25);
+  box-shadow: var(--rg-shadow-teal);
+}
+
+/* ============================================================
+   FORM & FIELDS
+   ============================================================ */
+.rg-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rg-field { display: flex; flex-direction: column; gap: 7px; }
+
+.rg-field__label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--rg-text-mid);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rg-field__wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.rg-field__icon {
+  position: absolute;
+  left: 14px;
+  font-size: 16px;
+  pointer-events: none;
+  z-index: 1;
+  line-height: 1;
+}
+
+.rg-field__input {
+  width: 100%;
+  padding: 13px 16px 13px 44px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: #f8fafc;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--rg-text-dark);
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.rg-field__input::placeholder { color: #94a3b8; }
+
+.rg-field__input:focus {
+  background: var(--rg-white);
+  border-color: var(--rg-teal);
+  box-shadow: 0 0 0 4px rgba(15,118,110,.1);
+  transform: translateY(-1px);
+}
+
+.rg-field__input:hover:not(:focus) {
+  border-color: var(--rg-border);
+  background: #f1f5f9;
+}
+
+.rg-field__toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  border-radius: 6px;
+  line-height: 1;
+  transition: transform 0.2s;
+  z-index: 1;
+}
+
+.rg-field__toggle:hover { transform: scale(1.15); }
+
+/* ============================================================
+   SUBMIT
+   ============================================================ */
+.rg-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, var(--rg-navy), var(--rg-navy-2, #1e3a5f));
+  color: var(--rg-white);
+  border: none;
+  border-radius: 13px;
+  font-family: 'Sora', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4,0,.2,1);
+  box-shadow: 0 6px 20px rgba(13,27,42,.22);
+  position: relative;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.rg-submit::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--rg-teal), var(--rg-teal-2));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.rg-submit:hover::before { opacity: 1; }
+
+.rg-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--rg-shadow-teal);
+}
+
+.rg-submit:active { transform: scale(0.98); }
+
+.rg-submit:disabled {
+  background: #cbd5e1;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.rg-submit:disabled::before { display: none; }
+
+.rg-submit span,
+.rg-submit__arrow { position: relative; z-index: 1; }
+
+.rg-submit__arrow {
+  font-size: 18px;
+  transition: transform 0.2s;
+}
+
+.rg-submit:hover .rg-submit__arrow { transform: translateX(5px); }
+
+.rg-submit__spinner {
+  width: 17px; height: 17px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: rg-spin 0.7s linear infinite;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes rg-spin { to { transform: rotate(360deg); } }
+
+/* ============================================================
+   DIVIDER + TRUST
+   ============================================================ */
+.rg-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0 16px;
+}
+
+.rg-divider span { flex: 1; height: 1px; background: var(--rg-border); }
+
+.rg-divider p {
+  font-size: 11px;
+  color: var(--rg-text-light);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rg-trust {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.rg-trust__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f8fafc;
+  border: 1px solid var(--rg-border);
+  color: var(--rg-text-light);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 860px) {
+  .rg-wrapper { flex-direction: column; max-width: 500px; }
+  .rg-panel-left { flex: none; padding: 36px 32px; }
+  .rg-panel-left__title { font-size: 28px; }
+  .rg-panel-left__sub { display: none; }
+  .rg-steps { flex-direction: row; gap: 8px; }
+  .rg-steps::before { display: none; }
+  .rg-step { flex-direction: column; align-items: center; text-align: center; flex: 1; padding: 10px 6px; }
+  .rg-step__sub { display: none; }
+  .rg-panel-right { padding: 36px 32px; }
+}
+
+@media (max-width: 520px) {
+  .rg-root { padding: 20px 16px; }
+  .rg-panel-left { padding: 28px 24px; }
+  .rg-panel-right { padding: 28px 24px; }
+  .rg-form-header__title { font-size: 22px; }
+  .rg-trust { display: none; }
+  .rg-steps { display: none; }
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+*:focus-visible {
+  outline: 2px solid var(--rg-teal);
+  outline-offset: 2px;
+  border-radius: 4px;
+}

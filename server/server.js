@@ -8,6 +8,8 @@ const Message = require('./models/Message');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs'); // Déclaré une seule fois ici
+const dbPassword = process.env.DB_PASS;
+
 
 const app = express();
 const server = http.createServer(app);
@@ -108,6 +110,8 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const favoriRoutes = require('./routes/favoriRoutes');
 const absenceRoutes = require('./routes/absenceRoutes');
 const chatbotRoutes = require('./routes/chatbotRoutes');
+const avisRoutes = require('./routes/avisRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 // ==========================================
 // UTILISATION DES ROUTES
@@ -120,8 +124,10 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/favoris', favoriRoutes);
 app.use('/api/absences', absenceRoutes);
 app.use('/api/chatbot', chatbotRoutes);
-
+app.use('/api/avis', avisRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+const notificationRoutes = require('./routes/notificationRoutes');
 
 // ==========================================
 // ROUTES API MESSAGES

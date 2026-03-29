@@ -1,160 +1,518 @@
-/* =========================================
-   NAVBAR GLOBALE (Niveau Ultra-Design)
-   ========================================= */
-.global-navbar {
+/* ============================================================
+   NAVBAR — Premium Design  ·  E-Santé
+   Font: Sora + DM Sans
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+/* ============================================================
+   ROOT
+   ============================================================ */
+.nb-root {
   position: sticky;
   top: 0;
   z-index: 1000;
-  
-  height: 80px; /* Hauteur fixe pour un meilleur contrôle */
+  height: 70px;
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  padding: 0 10%;
-  
-  /* Glassmorphism de haute précision */
-  background-color: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  
-  /* Bordure supérieure de lumière et bordure inférieure de structure */
-  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.02);
-  
-  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0 48px;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-bottom: 1px solid rgba(226,232,240,.7);
+  box-shadow: 0 1px 0 rgba(226,232,240,.6);
+  transition: box-shadow 0.35s ease, background 0.35s ease;
+  font-family: 'DM Sans', sans-serif;
 }
 
-/* --- LOGO AVANCÉ --- */
-.nav-logo a {
-  font-size: 28px;
-  font-weight: 900;
-  color: #0f172a; /* Plus sombre pour le contraste */
-  text-decoration: none;
+.nb-root--scrolled {
+  background: rgba(255,255,255,.98);
+  box-shadow: 0 1px 0 rgba(226,232,240,.8), 0 4px 24px rgba(13,27,42,.07);
+}
+
+/* ===== ADMIN ROOT — thème dark ===== */
+.nb-root--admin {
+  background: rgba(13,17,23,.96) !important;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 1px 0 rgba(255,255,255,.06);
+}
+
+.nb-root--admin.nb-root--scrolled {
+  background: rgba(13,17,23,.99) !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,.08), 0 4px 24px rgba(0,0,0,.3);
+}
+
+/* ============================================================
+   GLOW LINE
+   ============================================================ */
+.nb-glow-line {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, #3b82f6 20%, #0f766e 50%, #14b8a6 75%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.nb-root--scrolled .nb-glow-line { opacity: 1; }
+
+/* Admin glow — indigo */
+.nb-glow-line--admin {
+  background: linear-gradient(90deg, transparent 0%, #4f46e5 25%, #6366f1 50%, #818cf8 75%, transparent 100%);
+}
+
+/* ============================================================
+   LOGO
+   ============================================================ */
+.nb-logo a {
   display: flex;
   align-items: center;
-  gap: 12px;
-  letter-spacing: -1.5px;
-}
-
-.nav-logo a span {
-  color: #2563eb;
-  transition: all 0.4s ease;
-}
-
-.nav-logo a:hover span {
-  transform: rotate(-10deg) scale(1.1);
-  filter: drop-shadow(0 0 8px rgba(37, 99, 235, 0.4));
-}
-
-/* --- MENU TYPE "PILL" --- */
-.nav-menu {
-  display: flex;
-  gap: 10px; /* Plus serré car on utilise des pastilles au survol */
-  background: rgba(241, 245, 249, 0.5); /* Optionnel: fond léger pour le groupe */
-  padding: 6px;
-  border-radius: 16px;
-}
-
-.nav-link {
+  gap: 10px;
   text-decoration: none;
-  color: #64748b;
-  font-weight: 700;
-  font-size: 14.5px;
-  padding: 10px 20px;
-  border-radius: 12px;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
 }
 
-/* Effet de pastille flottante au survol */
-.nav-link:hover {
-  color: #2563eb;
-  background-color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
-  transform: translateY(-1px);
-}
-
-/* --- ACTIONS & BOUTONS PREMIUM --- */
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.btn-text {
-  text-decoration: none;
-  color: #475569;
-  font-weight: 700;
-  font-size: 14px;
-  padding: 10px 15px;
+.nb-logo__icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, #0f766e, #14b8a6);
   border-radius: 10px;
-  transition: all 0.3s ease;
-}
-
-.btn-text:hover {
-  color: #0f172a;
-  background: rgba(15, 23, 42, 0.03);
-}
-
-/* Bouton "Liquid Glow" */
-.btn-primary {
-  background: #0f172a; /* Fond très sombre pour le contraste */
-  color: white;
-  padding: 14px 30px;
-  border-radius: 14px;
-  text-decoration: none;
-  font-weight: 800;
-  font-size: 14px;
-  letter-spacing: 0.3px;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.2);
+  color: white;
+  box-shadow: 0 4px 10px rgba(15,118,110,.3);
+  transition: transform 0.3s cubic-bezier(0.34,1.56,.64,1), box-shadow 0.3s ease;
+  flex-shrink: 0;
 }
 
-.btn-primary:hover {
-  background: #2563eb;
-  transform: translateY(-3px);
-  box-shadow: 0 15px 30px -5px rgba(37, 99, 235, 0.3);
+.nb-logo a:hover .nb-logo__icon {
+  transform: rotate(-8deg) scale(1.1);
+  box-shadow: 0 6px 16px rgba(15,118,110,.4);
 }
 
-/* Lueur interne au clic */
-.btn-primary:active {
-  transform: scale(0.97);
+/* Admin logo — indigo */
+.nb-logo__icon--admin {
+  background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+  box-shadow: 0 4px 12px rgba(79,70,229,.4) !important;
 }
 
-/* --- INDICATEUR DE CONNEXION (Petit plus) --- */
-/* Si tu as un nom d'utilisateur, tu peux ajouter cette classe */
-.user-status-pill {
-  background: #ecfdf5;
-  color: #059669;
-  padding: 6px 12px;
-  border-radius: 99px;
-  font-size: 12px;
-  font-weight: 800;
+.nb-logo a:hover .nb-logo__icon--admin {
+  box-shadow: 0 6px 20px rgba(79,70,229,.5) !important;
+}
+
+.nb-logo__text {
+  font-family: 'Sora', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  color: #0d1b2a;
+  letter-spacing: -0.8px;
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.user-status-pill::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  background: #10b981;
+.nb-logo__text span:first-child { color: #0f766e; }
+
+/* Admin text */
+.nb-root--admin .nb-logo__text { color: #e6edf3; }
+.nb-root--admin .nb-logo__text span:first-child { color: #818cf8; }
+
+/* Admin badge next to logo */
+.nb-logo__admin-badge {
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  color: white !important;
+  padding: 2px 9px;
+  border-radius: 999px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-left: 2px;
+}
+
+/* ============================================================
+   MENU — STANDARD (patient / médecin)
+   ============================================================ */
+.nb-menu {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 5px;
+  border-radius: 14px;
+}
+
+.nb-link {
+  text-decoration: none;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: 10px;
+  transition: all 0.25s cubic-bezier(0.4,0,.2,1);
+  white-space: nowrap;
+}
+
+.nb-link:hover {
+  color: #0d1b2a;
+  background: white;
+  box-shadow: 0 2px 8px rgba(13,27,42,.06);
+}
+
+.nb-link.active,
+.nb-link:focus-visible {
+  color: #0f766e;
+  background: white;
+  box-shadow: 0 2px 8px rgba(13,27,42,.06);
+  outline: none;
+}
+
+/* ============================================================
+   MENU — ADMIN VERSION
+   ============================================================ */
+.nb-menu--admin {
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+}
+
+.nb-link--admin {
+  color: rgba(255,255,255,.55) !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 8px 15px;
+  border-radius: 10px;
+  transition: all 0.22s ease;
+}
+
+.nb-link--admin:hover {
+  color: #e6edf3 !important;
+  background: rgba(255,255,255,.1) !important;
+  box-shadow: none !important;
+}
+
+.nb-link--admin.active {
+  color: #a5b4fc !important;
+  background: rgba(79,70,229,.2) !important;
+  box-shadow: inset 0 0 0 1px rgba(99,102,241,.3) !important;
+}
+
+.nb-dropdown__trigger--open.nb-link--admin {
+  color: #a5b4fc !important;
+  background: rgba(79,70,229,.2) !important;
+}
+
+/* ============================================================
+   DROPDOWN — shared
+   ============================================================ */
+.nb-dropdown { position: relative; }
+
+.nb-dropdown__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.nb-dropdown__trigger--open {
+  color: #0f766e;
+  background: white;
+  box-shadow: 0 2px 8px rgba(13,27,42,.06);
+}
+
+.nb-dropdown__chevron {
+  transition: transform 0.25s ease;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.nb-dropdown__chevron--open { transform: rotate(180deg); opacity: 1; }
+
+.nb-dropdown__menu {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 250px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 8px;
+  box-shadow: 0 4px 6px rgba(13,27,42,.04), 0 12px 36px rgba(13,27,42,.1);
+  z-index: 500;
+  overflow: hidden;
+  animation: nb-dropIn 0.22s cubic-bezier(0.22,1,.36,1) backwards;
+}
+
+@keyframes nb-dropIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0)    scale(1); }
+}
+
+/* Admin dropdown dark */
+.nb-dropdown__menu--admin {
+  background: #1c2333 !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  box-shadow: 0 4px 6px rgba(0,0,0,.2), 0 12px 36px rgba(0,0,0,.4) !important;
+}
+
+.nb-dropdown__menu--admin .nb-dropdown__item:hover {
+  background: rgba(255,255,255,.06) !important;
+}
+
+.nb-dropdown__menu--admin .nb-dropdown__item-title { color: #e6edf3 !important; }
+.nb-dropdown__menu--admin .nb-dropdown__item-sub   { color: #8b949e !important; }
+.nb-dropdown__menu--admin .nb-dropdown__divider { background: rgba(255,255,255,.08); }
+
+.nb-dropdown__glow {
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, rgba(15,118,110,.08), transparent 65%);
+  pointer-events: none;
   border-radius: 50%;
 }
 
-/* --- RESPONSIVE OPTIMISÉ --- */
-@media (max-width: 1024px) {
-  .global-navbar { padding: 0 5%; }
-  .nav-menu { gap: 5px; }
+.nb-dropdown__glow--indigo {
+  background: radial-gradient(circle, rgba(79,70,229,.15), transparent 65%);
 }
 
-@media (max-width: 768px) {
-  .nav-menu { display: none; } /* On cache pour le menu mobile futur */
-  .btn-primary { padding: 12px 20px; font-size: 13px; }
+.nb-dropdown__divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+  margin: 4px 8px;
 }
+
+.nb-dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 11px 12px;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.nb-dropdown__item:hover {
+  background: #f8fafc;
+  transform: translateX(3px);
+}
+
+.nb-dropdown__item-icon {
+  width: 34px; height: 34px;
+  min-width: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.nb-dropdown__item:hover .nb-dropdown__item-icon { transform: scale(1.1) rotate(-4deg); }
+
+.nb-dropdown__item-icon--teal {
+  background: #f0fdfa;
+  color: #0f766e;
+  border: 1px solid rgba(15,118,110,.15);
+}
+
+.nb-dropdown__item-icon--blue {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid rgba(37,99,235,.15);
+}
+
+/* Admin icon colors */
+.nb-dropdown__item-icon--indigo {
+  background: rgba(79,70,229,.15);
+  color: #a5b4fc;
+  border: 1px solid rgba(79,70,229,.2);
+}
+
+.nb-dropdown__item-icon--purple {
+  background: rgba(124,58,237,.12);
+  color: #c4b5fd;
+  border: 1px solid rgba(124,58,237,.2);
+}
+
+.nb-dropdown__item-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0d1b2a;
+  margin-bottom: 2px;
+}
+
+.nb-dropdown__item-sub {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* ============================================================
+   ACTIONS
+   ============================================================ */
+.nb-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nb-space-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 9px 16px;
+  border-radius: 10px;
+  transition: all 0.25s ease;
+}
+
+.nb-space-link__dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: nb-pulse 2s infinite;
+}
+
+/* Teal — Médecin */
+.nb-space-link--teal { color: #0f766e; background: #f0fdfa; border: 1px solid #ccfbf1; }
+.nb-space-link--teal .nb-space-link__dot { background: #0f766e; }
+.nb-space-link--teal:hover { background: #ccfbf1; border-color: #0f766e; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(15,118,110,.15); }
+
+/* Blue — Patient */
+.nb-space-link--blue { color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; }
+.nb-space-link--blue .nb-space-link__dot { background: #2563eb; }
+.nb-space-link--blue:hover { background: #bfdbfe; border-color: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,.15); }
+
+/* Indigo — Admin */
+.nb-space-link--admin {
+  color: #a5b4fc;
+  background: rgba(79,70,229,.15);
+  border: 1px solid rgba(99,102,241,.3);
+}
+
+.nb-space-link__dot--admin { background: #6366f1; }
+
+.nb-space-link--admin:hover {
+  background: rgba(79,70,229,.25);
+  border-color: #6366f1;
+  color: #c7d2fe;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(79,70,229,.25);
+}
+
+@keyframes nb-pulse {
+  0%   { box-shadow: 0 0 0 0 currentColor; opacity: .8; }
+  60%  { box-shadow: 0 0 0 5px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; opacity: 1; }
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.nb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.25s cubic-bezier(0.4,0,.2,1);
+  white-space: nowrap;
+}
+
+.nb-btn--ghost { background: transparent; color: #475569; border: 1px solid #e2e8f0; }
+.nb-btn--ghost:hover { background: #f8fafc; color: #0d1b2a; border-color: #cbd5e1; }
+
+.nb-btn--primary {
+  background: linear-gradient(135deg, #0d1b2a, #1e3a5f);
+  color: white;
+  box-shadow: 0 4px 12px rgba(13,27,42,.2);
+}
+.nb-btn--primary:hover {
+  background: linear-gradient(135deg, #0f766e, #14b8a6);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(15,118,110,.3);
+}
+.nb-btn--primary:active { transform: scale(0.97); }
+
+.nb-btn--logout { background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; }
+.nb-btn--logout:hover { background: #fecdd3; border-color: #e11d48; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(225,29,72,.15); }
+
+/* Admin logout */
+.nb-root--admin .nb-btn--logout {
+  background: rgba(239,68,68,.12);
+  color: #fca5a5;
+  border: 1px solid rgba(239,68,68,.25);
+}
+
+.nb-root--admin .nb-btn--logout:hover {
+  background: rgba(239,68,68,.22);
+  border-color: rgba(239,68,68,.4);
+  box-shadow: 0 4px 12px rgba(239,68,68,.2);
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) { .nb-root { padding: 0 28px; } }
+
+@media (max-width: 768px) {
+  .nb-root { padding: 0 20px; }
+  .nb-menu, .nb-menu--admin { display: none; }
+  .nb-space-link span:not(.nb-space-link__dot) { display: none; }
+  .nb-space-link { padding: 9px 12px; }
+  .nb-btn--ghost { display: none; }
+  .nb-btn--primary, .nb-btn--logout { padding: 10px 16px; font-size: 13px; }
+}
+
+@media (max-width: 480px) {
+  .nb-logo__text { font-size: 17px; }
+  .nb-logo__icon { width: 30px; height: 30px; }
+  .nb-logo__admin-badge { display: none; }
+}
+
+/* ===== nb-link as button (admin nav) ===== */
+button.nb-link {
+  cursor: pointer;
+  background: none;
+  font-family: 'DM Sans', sans-serif;
+}
+
+button.nb-link--admin {
+  background: none;
+}
+
+/* dropdown item as button */
+.nb-dropdown__item--btn {
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.nb-dropdown__item--btn:hover {
+  background: rgba(255,255,255,.06);
+  transform: translateX(3px);
+}
+
+.nb-dropdown__menu--admin .nb-dropdown__item--btn .nb-dropdown__item-title { color: #e6edf3; }
+.nb-dropdown__menu--admin .nb-dropdown__item--btn .nb-dropdown__item-sub   { color: #8b949e; }

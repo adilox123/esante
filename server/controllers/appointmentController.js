@@ -3,6 +3,7 @@ const Patient = require('../models/Patient');
 const Medecin = require('../models/Medecin');
 const User = require('../models/User');
 const Absence = require('../models/Absence');
+const db = require('../config/db');
 
 // ==========================================
 // CRÉER UN NOUVEAU RENDEZ-VOUS
@@ -184,5 +185,61 @@ exports.bookAppointment = async (req, res) => {
     res.status(201).json({ success: true, rdv });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+
+// ==========================================
+// MÉDECIN : CONFIRMER OU ANNULER UN RDV
+// ==========================================
+exports.updateRdvStatus = async (req, res) => {
+  try {
+    const { id } = req.params; // C'est l'ID du RDV
+    const { statut } = req.body;
+
+    // 1. Mettre à jour le statut du rendez-vous
+    await db.query(`UPDATE rendez_vous SET statut = :statut WHERE id = :id`, {
+      replacements: { statut, id },
+      type: db.QueryTypes.UPDATE
+    });
+
+    // 2. Récupérer les infos pour la notification
+    const rdvInfo = await db.query(
+      `SELECT p.user_id, um.nom as medecin_nom, r.motif, r.date_rdv, r.heure_rdv
+       FROM rendez_vous r 
+       JOIN patients p ON r.patient_id = p.id 
+       JOIN medecins m ON r.medecin_id = m.id
+       JOIN users um ON m.user_id = um.id
+       WHERE r.id = :id`,
+      { replacements: { id }, type: db.QueryTypes.SELECT }
+    );
+
+    if (rdvInfo.length > 0) {
+      const info = rdvInfo[0];
+      
+      const message = statut === 'Confirmé' 
+        ? `✅ Votre rendez-vous avec le Dr. ${info.medecin_nom} a été confirmé. Vous pouvez maintenant procéder au paiement.` 
+        : `❌ Désolé, le Dr. ${info.medecin_nom} a dû annuler votre rendez-vous.`;
+
+      const type = statut === 'Confirmé' ? 'success' : 'danger';
+
+      // 🎯 MODIFICATION ICI : On ajoute appointment_id
+      await db.query(
+        `INSERT INTO notifications (user_id, appointment_id, message, type) 
+         VALUES (:userId, :rdvId, :msg, :type)`,
+        { replacements: { 
+            userId: info.user_id, 
+            rdvId: id, // On lie la notif au RDV
+            msg: message, 
+            type: type 
+        }}
+      );
+    }
+
+    res.status(200).json({ success: true, message: "Statut mis à jour et patient notifié." });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Erreur serveur" });
   }
 };

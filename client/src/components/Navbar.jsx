@@ -1,100 +1,213 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaHeartbeat, FaUserMd, FaUser } from 'react-icons/fa';
+import {
+  FaHeartbeat, FaUserMd, FaUser, FaChevronDown,
+  FaLifeRing, FaInfoCircle, FaShieldAlt,
+  FaChartLine, FaUserInjured, FaCalendarCheck,
+  FaClipboardList, FaTachometerAlt
+} from 'react-icons/fa';
 import './Navbar.css';
 
 export default function Navbar({ onOpenLogin, onOpenRegister }) {
-  const navigate = useNavigate();
-  
-  // On récupère le token et le rôle depuis le stockage du navigateur
-  const token = localStorage.getItem('token');
-  const role = localStorage.getItem('role'); // Peut être 'patient' ou 'medecin'
+  const navigate   = useNavigate();
+  const [scrolled,  setScrolled]  = useState(false);
+  const [infoOpen,  setInfoOpen]  = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
+  const dropdownRef  = useRef(null);
+  const adminDropRef = useRef(null);
+
+  const token   = localStorage.getItem('token');
+  const role    = localStorage.getItem('role');
+  const isAdmin = role === 'admin';
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleOut = (e) => {
+      if (dropdownRef.current  && !dropdownRef.current.contains(e.target))  setInfoOpen(false);
+      if (adminDropRef.current && !adminDropRef.current.contains(e.target)) setAdminOpen(false);
+    };
+    document.addEventListener('mousedown', handleOut);
+    return () => document.removeEventListener('mousedown', handleOut);
+  }, []);
 
   const handleLogout = () => {
     const patientId = localStorage.getItem('userId');
-    
-    // On nettoie le navigateur
-    if (patientId) {
-      localStorage.removeItem(`chat_history_${patientId}`); 
-    }
-    localStorage.removeItem('userId'); 
-    localStorage.removeItem('token'); // Si tu en as un
-    
-    // On redirige vers l'accueil
-    navigate('/'); 
+    if (patientId) localStorage.removeItem(`chat_history_${patientId}`);
+    localStorage.clear();
+    navigate('/');
+  };
+
+  /* ============================================================
+     Helper: navigate admin tab
+     ============================================================ */
+  const goAdminTab = (tab) => {
+    setAdminOpen(false);
+    navigate(`/admin-dashboard?tab=${tab}`);
   };
 
   return (
-    <nav className="global-navbar">
-      
-      {/* --- LOGO --- */}
-      <div className="nav-logo">
-        <Link to="/" style={{ display: 'flex', alignItems: 'center' }}>
-          <FaHeartbeat size={28} color="#0056d2" style={{ marginRight: '8px' }} />
-          E-Santé
+    <nav className={`nb-root ${scrolled ? 'nb-root--scrolled' : ''} ${isAdmin ? 'nb-root--admin' : ''}`}>
+
+      <div className={`nb-glow-line ${isAdmin ? 'nb-glow-line--admin' : ''}`} />
+
+      {/* ===== LOGO ===== */}
+      <div className="nb-logo">
+        <Link to={isAdmin ? '/admin-dashboard?tab=overview' : '/'}>
+          <div className={`nb-logo__icon ${isAdmin ? 'nb-logo__icon--admin' : ''}`}>
+            {isAdmin ? <FaShieldAlt size={17} /> : <FaHeartbeat size={18} />}
+          </div>
+          <span className="nb-logo__text">
+            E<span>-</span>Santé
+            {isAdmin && <span className="nb-logo__admin-badge">Admin</span>}
+          </span>
         </Link>
       </div>
-      
-      {/* --- MENU CENTRAL --- */}
-      <div className="nav-menu">
-        <Link to="/" className="nav-link">Accueil</Link>
-        <Link to="/doctors" className="nav-link">Médecins</Link>
-        <Link to="/contact" className="nav-link">Contact</Link>
-      </div>
 
-      {/* --- ACTIONS (Connexion / Boutons) --- */}
-      <div className="nav-actions">
+      {/* ===== MENU ADMIN ===== */}
+      {isAdmin ? (
+        <div className="nb-menu nb-menu--admin">
+
+          <button className="nb-link nb-link--admin" onClick={() => goAdminTab('overview')}>
+            <FaTachometerAlt size={12} /> Vue d'ensemble
+          </button>
+
+          <button className="nb-link nb-link--admin" onClick={() => goAdminTab('patients')}>
+            <FaUserInjured size={12} /> Patients
+          </button>
+
+          <button className="nb-link nb-link--admin" onClick={() => goAdminTab('medecins')}>
+            <FaUserMd size={12} /> Médecins
+          </button>
+
+          <button className="nb-link nb-link--admin" onClick={() => goAdminTab('rdv')}>
+            <FaCalendarCheck size={12} /> Rendez-vous
+          </button>
+
+          {/* Dropdown Rapports */}
+          <div className="nb-dropdown" ref={adminDropRef}>
+            <button
+              className={`nb-link nb-link--admin nb-dropdown__trigger ${adminOpen ? 'nb-dropdown__trigger--open' : ''}`}
+              onClick={() => setAdminOpen(v => !v)}
+            >
+              <FaClipboardList size={12} /> Rapports
+              <FaChevronDown size={10} className={`nb-dropdown__chevron ${adminOpen ? 'nb-dropdown__chevron--open' : ''}`} />
+            </button>
+
+            {adminOpen && (
+              <div className="nb-dropdown__menu nb-dropdown__menu--admin">
+                <div className="nb-dropdown__glow nb-dropdown__glow--indigo" />
+
+                <button className="nb-dropdown__item nb-dropdown__item--btn" onClick={() => goAdminTab('rapports')}>
+                  <div className="nb-dropdown__item-icon nb-dropdown__item-icon--indigo">
+                    <FaChartLine size={13} />
+                  </div>
+                  <div>
+                    <p className="nb-dropdown__item-title">Statistiques</p>
+                    <p className="nb-dropdown__item-sub">Données globales de la plateforme</p>
+                  </div>
+                </button>
+
+                <div className="nb-dropdown__divider" />
+
+                <button className="nb-dropdown__item nb-dropdown__item--btn" onClick={() => goAdminTab('rapports')}>
+                  <div className="nb-dropdown__item-icon nb-dropdown__item-icon--purple">
+                    <FaClipboardList size={13} />
+                  </div>
+                  <div>
+                    <p className="nb-dropdown__item-title">Rapports complets</p>
+                    <p className="nb-dropdown__item-sub">Export &amp; analyse des données</p>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+      ) : (
+        /* ===== MENU PATIENT / MÉDECIN ===== */
+        <div className="nb-menu">
+          <Link to="/"        className="nb-link">Accueil</Link>
+          <Link to="/doctors" className="nb-link">Médecins</Link>
+          <Link to="/contact" className="nb-link">Contact</Link>
+
+          <div className="nb-dropdown" ref={dropdownRef}>
+            <button
+              className={`nb-link nb-dropdown__trigger ${infoOpen ? 'nb-dropdown__trigger--open' : ''}`}
+              onClick={() => setInfoOpen(v => !v)}
+            >
+              Informations
+              <FaChevronDown size={11} className={`nb-dropdown__chevron ${infoOpen ? 'nb-dropdown__chevron--open' : ''}`} />
+            </button>
+
+            {infoOpen && (
+              <div className="nb-dropdown__menu">
+                <div className="nb-dropdown__glow" />
+
+                <Link to="/centre-aide" className="nb-dropdown__item" onClick={() => setInfoOpen(false)}>
+                  <div className="nb-dropdown__item-icon nb-dropdown__item-icon--teal">
+                    <FaLifeRing size={14} />
+                  </div>
+                  <div>
+                    <p className="nb-dropdown__item-title">Centre d'aides</p>
+                    <p className="nb-dropdown__item-sub">FAQ &amp; support</p>
+                  </div>
+                </Link>
+
+                <div className="nb-dropdown__divider" />
+
+                <Link to="/Informations" className="nb-dropdown__item" onClick={() => setInfoOpen(false)}>
+                  <div className="nb-dropdown__item-icon nb-dropdown__item-icon--blue">
+                    <FaInfoCircle size={14} />
+                  </div>
+                  <div>
+                    <p className="nb-dropdown__item-title">Informations E-Santé</p>
+                    <p className="nb-dropdown__item-sub">À propos de la plateforme</p>
+                  </div>
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ===== ACTIONS ===== */}
+      <div className="nb-actions">
         {token ? (
-          // SI L'UTILISATEUR EST CONNECTÉ :
           <>
-            {/* Différenciation intelligente Patient / Médecin */}
-            {role === 'medecin' ? (
-              <Link 
-                to="/doctor-dashboard" 
-                className="btn-text" 
-                style={{marginRight: '20px', color: '#0056d2', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none'}}
-              >
-                <FaUserMd size={20} /> Espace Médecin
+            {isAdmin ? (
+              <button className="nb-space-link nb-space-link--admin" onClick={() => goAdminTab('overview')} style={{ cursor: 'pointer', border: 'none' }}>
+                <span className="nb-space-link__dot nb-space-link__dot--admin" />
+                <FaShieldAlt size={14} />
+                <span>Espace Admin</span>
+              </button>
+            ) : role === 'medecin' ? (
+              <Link to="/doctor-dashboard" className="nb-space-link nb-space-link--teal">
+                <span className="nb-space-link__dot" />
+                <FaUserMd size={15} />
+                <span>Espace Médecin</span>
               </Link>
             ) : (
-              <Link 
-                to="/dashboard" 
-                className="btn-text" 
-                style={{marginRight: '20px', color: '#0056d2', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none'}}
-              >
-                <FaUser size={18} /> Mon Espace Patient
+              <Link to="/dashboard" className="nb-space-link nb-space-link--blue">
+                <span className="nb-space-link__dot" />
+                <FaUser size={14} />
+                <span>Mon Espace Patient</span>
               </Link>
             )}
-            
-            <button 
-              onClick={handleLogout} 
-              className="btn-primary" 
-              style={{backgroundColor: '#e11d48', border:'none', cursor:'pointer', padding: '10px 20px', borderRadius: '8px', color: 'white', fontWeight: 'bold'}}
-            >
-              Déconnexion
-            </button>
+            <button onClick={handleLogout} className="nb-btn nb-btn--logout">Déconnexion</button>
           </>
         ) : (
-          // SI L'UTILISATEUR N'EST PAS CONNECTÉ :
           <>
-            <button 
-              onClick={onOpenLogin} 
-              className="btn-text" 
-              style={{background:'none', border:'none', cursor:'pointer', fontSize:'16px', color: '#334155', fontWeight: '600'}}
-            >
-              Se connecter
-            </button>
-            <button 
-              onClick={onOpenRegister} 
-              className="btn-primary" 
-              style={{border:'none', cursor:'pointer', fontSize:'16px', padding: '10px 20px', borderRadius: '8px', backgroundColor: '#0056d2', color: 'white', fontWeight: 'bold'}}
-            >
-              S'inscrire
-            </button>
+            <button onClick={onOpenLogin}    className="nb-btn nb-btn--ghost">Se connecter</button>
+            <button onClick={onOpenRegister} className="nb-btn nb-btn--primary">S'inscrire</button>
           </>
         )}
       </div>
-      
+
     </nav>
   );
 }

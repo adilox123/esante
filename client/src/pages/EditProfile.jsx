@@ -1,4 +1,4 @@
-// pages/EditProfile.jsx - Version Patient (avec adresse)
+// pages/EditProfile.jsx - Version Patient
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -10,7 +10,7 @@ const EditProfile = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     nom: '',
     prenom: '',
@@ -18,24 +18,17 @@ const EditProfile = () => {
     telephone: '',
     date_naissance: '',
     groupe_sanguin: 'Non renseigné',
-    adresse: '' // ✅ Ajout de l'adresse ici
+    adresse: ''
   });
 
   const groupesSanguins = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Non renseigné'];
 
-  useEffect(() => {
-    fetchPatientData();
-  }, []);
+  useEffect(() => { fetchPatientData(); }, []);
 
   const fetchPatientData = async () => {
     try {
       const userId = localStorage.getItem('userId');
-      console.log("🔍 User ID:", userId);
-      
       const response = await api.get(`/patients/profile?userId=${userId}`);
-      
-      console.log("✅ Données reçues:", response.data);
-      
       setFormData({
         nom: response.data.user?.nom || '',
         prenom: response.data.user?.prenom || '',
@@ -43,12 +36,10 @@ const EditProfile = () => {
         telephone: response.data.telephone || '',
         date_naissance: response.data.date_naissance || '',
         groupe_sanguin: response.data.groupe_sanguin || 'Non renseigné',
-        adresse: response.data.adresse || '' // ✅ Récupération de l'adresse depuis la BD
+        adresse: response.data.adresse || ''
       });
-      
       setLoading(false);
     } catch (error) {
-      console.error('❌ Erreur:', error);
       setError('Erreur lors du chargement de vos informations');
       setLoading(false);
     }
@@ -56,25 +47,18 @@ const EditProfile = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     setError(null);
-    
     try {
       const userId = localStorage.getItem('userId');
       const token = localStorage.getItem('token');
-      
       const profileResponse = await api.get(`/patients/profile?userId=${userId}`);
       const patientId = profileResponse.data.id;
-      
-      // ✅ Envoi de l'adresse avec les autres champs
       await api.put(`/patients/${patientId}`, {
         nom: formData.nom,
         prenom: formData.prenom,
@@ -82,159 +66,168 @@ const EditProfile = () => {
         telephone: formData.telephone,
         date_naissance: formData.date_naissance,
         groupe_sanguin: formData.groupe_sanguin,
-        adresse: formData.adresse 
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
+        adresse: formData.adresse
+      }, { headers: { Authorization: `Bearer ${token}` } });
       setSuccess(true);
-      
       setTimeout(() => {
-        navigate('/dashboard', { // ⚠️ J'ai remis '/dashboard' au lieu de '/patient-dashboard' selon ta capture d'écran précédente
-          state: { 
-            message: '✅ Vos informations ont été mises à jour avec succès !',
-            type: 'success'
-          }
+        navigate('/dashboard', {
+          state: { message: '✅ Vos informations ont été mises à jour avec succès !', type: 'success' }
         });
       }, 1500);
-      
     } catch (error) {
-      console.error('❌ Erreur mise à jour:', error);
       setError('Erreur lors de la mise à jour de vos informations');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleCancel = () => {
-    navigate('/dashboard'); // ⚠️ Ajusté pour correspondre à ton URL
-  };
+  const handleCancel = () => navigate('/dashboard');
 
   if (loading) {
     return (
-      <div className="edit-profile-container">
-        <div className="loading-spinner">Chargement de vos informations...</div>
+      <div className="ep-root">
+        <div className="ep-orb ep-orb--1" /><div className="ep-orb ep-orb--2" />
+        <div className="ep-loading">
+          <div className="ep-spinner" />
+          <p>Chargement de vos informations...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="edit-profile-container">
-      <div className="edit-profile-card">
-        <h1>Modifier mes informations</h1>
-        
+    <div className="ep-root">
+      <div className="ep-orb ep-orb--1" />
+      <div className="ep-orb ep-orb--2" />
+      <div className="ep-orb ep-orb--3" />
+
+      <div className="ep-card">
+
+        {/* Header */}
+        <div className="ep-card__header">
+          <div className="ep-card__header-icon">👤</div>
+          <div>
+            <h1 className="ep-card__title">Modifier mon profil</h1>
+            <p className="ep-card__subtitle">Mettez à jour vos informations personnelles</p>
+          </div>
+        </div>
+
+        {/* Top accent */}
+        <div className="ep-card__accent" />
+
+        {/* Alerts */}
         {success && (
-          <div className="success-message">
-            ✓ Informations mises à jour avec succès ! Redirection...
+          <div className="ep-alert ep-alert--success">
+            <span>✅</span> Informations mises à jour avec succès ! Redirection en cours...
           </div>
         )}
-        
         {error && (
-          <div className="error-message">
-            ❌ {error}
+          <div className="ep-alert ep-alert--error">
+            <span>❌</span> {error}
           </div>
         )}
-        
-        <form onSubmit={handleSubmit} className="edit-form">
-          <div className="form-row">
-            <div className="form-group">
-              <label>Nom</label>
+
+        <form onSubmit={handleSubmit} className="ep-form">
+
+          {/* Section identité */}
+          <div className="ep-section">
+            <p className="ep-section__label">Identité</p>
+            <div className="ep-row">
+              <div className="ep-field">
+                <label className="ep-field__label">Nom</label>
+                <input
+                  type="text" name="nom" value={formData.nom}
+                  onChange={handleChange} required
+                  className="ep-field__input" placeholder="Ex: Alaoui"
+                />
+              </div>
+              <div className="ep-field">
+                <label className="ep-field__label">Prénom</label>
+                <input
+                  type="text" name="prenom" value={formData.prenom}
+                  onChange={handleChange} required
+                  className="ep-field__input" placeholder="Ex: Youssef"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Section contact */}
+          <div className="ep-section">
+            <p className="ep-section__label">Contact</p>
+            <div className="ep-field">
+              <label className="ep-field__label">Adresse Email</label>
               <input
-                type="text"
-                name="nom"
-                value={formData.nom}
-                onChange={handleChange}
-                required
+                type="email" name="email" value={formData.email}
+                onChange={handleChange} required
+                className="ep-field__input" placeholder="Ex: youssef@email.com"
               />
             </div>
-            
-            <div className="form-group">
-              <label>Prénom</label>
+            <div className="ep-field">
+              <label className="ep-field__label">Téléphone</label>
               <input
-                type="text"
-                name="prenom"
-                value={formData.prenom}
+                type="tel" name="telephone" value={formData.telephone}
                 onChange={handleChange}
-                required
+                className="ep-field__input" placeholder="Ex: 06 XX XX XX XX"
+              />
+            </div>
+            <div className="ep-field">
+              <label className="ep-field__label">Adresse</label>
+              <input
+                type="text" name="adresse" value={formData.adresse}
+                onChange={handleChange}
+                className="ep-field__input" placeholder="Ex: Quartier Agdal, Rabat"
               />
             </div>
           </div>
 
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Téléphone</label>
-            <input
-              type="tel"
-              name="telephone"
-              value={formData.telephone}
-              onChange={handleChange}
-              placeholder="06 XX XX XX XX"
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Date de naissance</label>
-              <input
-                type="date"
-                name="date_naissance"
-                value={formData.date_naissance}
-                onChange={handleChange}
-              />
-            </div>
-            
-            <div className="form-group">
-              <label>Groupe sanguin</label>
-              <select
-                name="groupe_sanguin"
-                value={formData.groupe_sanguin}
-                onChange={handleChange}
-              >
-                {groupesSanguins.map(groupe => (
-                  <option key={groupe} value={groupe}>{groupe}</option>
-                ))}
-              </select>
+          {/* Section médical */}
+          <div className="ep-section">
+            <p className="ep-section__label">Informations médicales</p>
+            <div className="ep-row">
+              <div className="ep-field">
+                <label className="ep-field__label">Date de naissance</label>
+                <input
+                  type="date" name="date_naissance" value={formData.date_naissance}
+                  onChange={handleChange}
+                  className="ep-field__input"
+                />
+              </div>
+              <div className="ep-field">
+                <label className="ep-field__label">Groupe sanguin</label>
+                <select
+                  name="groupe_sanguin" value={formData.groupe_sanguin}
+                  onChange={handleChange}
+                  className="ep-field__input"
+                >
+                  {groupesSanguins.map(g => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
-          {/* ✅ Ajout du champ Adresse ici */}
-          <div className="form-group">
-            <label>Adresse</label>
-            <input
-              type="text"
-              name="adresse"
-              value={formData.adresse}
-              onChange={handleChange}
-              placeholder="Ex: Quartier Agdal, Rabat"
-            />
-          </div>
-
-          <div className="form-actions">
-            <button 
-              type="button" 
-              className="cancel-btn"
-              onClick={handleCancel}
-            >
+          {/* Actions */}
+          <div className="ep-actions">
+            <button type="button" className="ep-btn ep-btn--ghost" onClick={handleCancel}>
               Annuler
             </button>
-            <button 
-              type="submit" 
-              className="save-btn"
-              disabled={saving}
-            >
-              {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
+            <button type="submit" className="ep-btn ep-btn--primary" disabled={saving}>
+              {saving ? (
+                <>
+                  <span className="ep-btn-spinner" />
+                  Enregistrement...
+                </>
+              ) : (
+                <>
+                  <span>Enregistrer les modifications</span>
+                  <span className="ep-btn-arrow">→</span>
+                </>
+              )}
             </button>
           </div>
+
         </form>
       </div>
     </div>
