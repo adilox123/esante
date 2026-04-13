@@ -23,6 +23,11 @@ export default function AuthModal({ isOpen, onClose, initialMode }) {
   const [adresse, setAdresse] = useState('');
   const [telephone, setTelephone] = useState('');
 
+  // ✅ NOUVEAU : État pour le document du médecin
+  const [documentMedecin, setDocumentMedecin] = useState(null);
+  const [docError, setDocError] = useState('');
+  const [isDragOver, setIsDragOver] = useState(false);
+
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -35,11 +40,35 @@ export default function AuthModal({ isOpen, onClose, initialMode }) {
     setEmail(''); setPassword(''); setConfirmPassword('');
     setNom(''); setPrenom('');
     setDateNaissance(''); setAdresse(''); setTelephone('');
+    setDocumentMedecin(null); setDocError(''); // ✅ Reset du doc
   }, [isOpen, initialMode]);
 
   if (!isOpen) return null;
 
   const handleClose = () => onClose();
+
+  // ✅ NOUVEAU : Validation et gestion du fichier uploadé
+  const handleDocumentChange = (file) => {
+    setDocError('');
+    if (!file) return;
+    const allowed = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowed.includes(file.type)) {
+      setDocError('Format non accepté. Veuillez choisir un PDF, JPG ou PNG.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setDocError('Le fichier ne doit pas dépasser 5 Mo.');
+      return;
+    }
+    setDocumentMedecin(file);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files[0];
+    handleDocumentChange(file);
+  };
 
   const handleNextStep = () => {
     if (!prenom.trim()) { setError("Le prénom est obligatoire."); return; }
@@ -53,51 +82,68 @@ export default function AuthModal({ isOpen, onClose, initialMode }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(''); setSuccess(''); setIsLoading(true);
+
+    // ✅ Vérification document obligatoire pour médecin
+    if (mode === 'register' && role === 'medecin' && !documentMedecin) {
+      setError("Veuillez joindre un document justificatif (diplôme ou carte professionnelle).");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       if (mode === 'login') {
         const res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
-        
-        const userRole = res.data.user.role; // On récupère le rôle
-        
+        const userRole = res.data.user.role;
         localStorage.setItem('token', res.data.token);
         localStorage.setItem('role', userRole);
         localStorage.setItem('userId', res.data.user.id);
         localStorage.setItem('nom', res.data.user.nom);
         localStorage.setItem('prenom', res.data.user.prenom);
-        
         handleClose();
-        
-        // 🎯 LA NOUVELLE REDIRECTION INTELLIGENTE :
         if (userRole === 'admin') {
           navigate('/admin-dashboard');
         } else if (userRole === 'medecin') {
-          navigate('/doctors'); // 👈 J'ai gardé ta route d'origine pour les médecins
+          navigate('/doctors');
         } else {
-          navigate('/dashboard'); // 👈 Route pour les patients
+          navigate('/dashboard');
         }
-        
       } else {
-        // ... (Le reste de ton code d'inscription reste exactement pareil)
-        const payload = { nom, prenom, email, password, role };
+        // ✅ Utilisation de FormData pour envoyer le fichier avec les données
+        const formData = new FormData();
+        formData.append('nom', nom);
+        formData.append('prenom', prenom);
+        formData.append('email', email);
+        formData.append('password', password);
+        formData.append('role', role);
+
         if (role === 'patient') {
-          payload.date_naissance = dateNaissance;
-          payload.sexe = sexe;
-          payload.groupe_sanguin = groupeSanguin;
-          payload.adresse = adresse;
-          payload.telephone = telephone;
+          formData.append('date_naissance', dateNaissance);
+          formData.append('sexe', sexe);
+          formData.append('groupe_sanguin', groupeSanguin);
+          formData.append('adresse', adresse);
+          formData.append('telephone', telephone);
         } else {
-          payload.specialite_id = parseInt(specialiteId);
-          payload.adresse = adresse;
-          payload.telephone = telephone;
+          formData.append('specialite_id', parseInt(specialiteId));
+          formData.append('adresse', adresse);
+          formData.append('telephone', telephone);
+          // ✅ Ajout du document justificatif
+          if (documentMedecin) {
+            formData.append('document_preuve', documentMedecin);
+          }
         }
-        await axios.post('http://localhost:5000/api/auth/register', payload);
-        setSuccess("Inscription réussie !");
+
+        await axios.post('http://localhost:5000/api/auth/register', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        setSuccess("Inscription réussie ! Votre dossier sera examiné par notre équipe.");
         setTimeout(() => {
           setMode('login'); setStep(1);
           setNom(''); setPrenom(''); setEmail('');
           setPassword(''); setConfirmPassword('');
           setDateNaissance(''); setAdresse(''); setTelephone('');
-        }, 1500);
+          setDocumentMedecin(null);
+        }, 2000);
       }
     } catch (err) {
       setError(err.response?.data?.message || err.response?.data?.error || "Une erreur est survenue.");
@@ -119,7 +165,6 @@ export default function AuthModal({ isOpen, onClose, initialMode }) {
           <div className="am-panel-left__circle am-panel-left__circle--2" />
 
           <div className="am-panel-left__content">
-            {/* Logo */}
             <div className="am-logo">
               <div className="am-logo__icon">💙</div>
               <span className="am-logo__text">E-Santé</span>
@@ -141,7 +186,6 @@ export default function AuthModal({ isOpen, onClose, initialMode }) {
                 : "Rejoignez la plateforme et simplifiez votre santé."}
             </p>
 
-            {/* Register: steps indicator */}
             {mode === 'register' && (
               <div className="am-steps">
                 <div className={`am-step ${step >= 1 ? 'am-step--done' : ''}`}>
@@ -156,7 +200,6 @@ export default function AuthModal({ isOpen, onClose, initialMode }) {
               </div>
             )}
 
-            {/* Login: trust badges */}
             {mode === 'login' && (
               <div className="am-trust">
                 <div className="am-trust__item">🔒 Sécurisé</div>
@@ -172,10 +215,8 @@ export default function AuthModal({ isOpen, onClose, initialMode }) {
         {/* ===== RIGHT PANEL ===== */}
         <div className="am-panel-right">
 
-          {/* Close button */}
           <button className="am-close" onClick={handleClose} title="Fermer">✕</button>
 
-          {/* Header */}
           <div className="am-form-header">
             {mode === 'register' && (
               <div className="am-step-badge">Étape {step} sur 2</div>
@@ -188,7 +229,6 @@ export default function AuthModal({ isOpen, onClose, initialMode }) {
             </p>
           </div>
 
-          {/* Alerts */}
           {error   && <div className="am-alert am-alert--error"><span>⚠️</span>{error}</div>}
           {success && <div className="am-alert am-alert--success"><span>✅</span>{success}</div>}
 
@@ -226,7 +266,6 @@ export default function AuthModal({ isOpen, onClose, initialMode }) {
             {/* ===== REGISTER STEP 1 ===== */}
             {mode === 'register' && step === 1 && (
               <>
-                {/* Role selector */}
                 <div className="am-role-selector">
                   <button type="button"
                     className={`am-role-btn ${role === 'patient' ? 'am-role-btn--active am-role-btn--blue' : ''}`}
@@ -367,6 +406,70 @@ export default function AuthModal({ isOpen, onClose, initialMode }) {
                       value={telephone} onChange={e => setTelephone(e.target.value)} required />
                   </div>
                 </div>
+
+                {/* ✅ NOUVEAU : ZONE D'UPLOAD DOCUMENT JUSTIFICATIF */}
+                <div className="am-field">
+                  <label className="am-field__label">
+                    Document justificatif <span className="am-field__required">*</span>
+                  </label>
+                  <p className="am-field__hint">
+                    Diplôme de médecine, carte d'ordre des médecins ou certificat d'exercice
+                  </p>
+
+                  {/* Zone drag & drop */}
+                  <div
+                    className={`am-upload-zone ${isDragOver ? 'am-upload-zone--drag' : ''} ${documentMedecin ? 'am-upload-zone--done' : ''}`}
+                    onDragOver={e => { e.preventDefault(); setIsDragOver(true); }}
+                    onDragLeave={() => setIsDragOver(false)}
+                    onDrop={handleDrop}
+                    onClick={() => document.getElementById('doc-medecin').click()}
+                  >
+                    <input
+                      type="file"
+                      id="doc-medecin"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      style={{ display: 'none' }}
+                      onChange={e => handleDocumentChange(e.target.files[0])}
+                    />
+
+                    {documentMedecin ? (
+                      /* Fichier sélectionné */
+                      <div className="am-upload-zone__success">
+                        <div className="am-upload-zone__success-icon">
+                          {documentMedecin.type === 'application/pdf' ? '📄' : '🖼️'}
+                        </div>
+                        <div className="am-upload-zone__success-info">
+                          <p className="am-upload-zone__filename">{documentMedecin.name}</p>
+                          <p className="am-upload-zone__filesize">
+                            {(documentMedecin.size / 1024).toFixed(0)} Ko · Cliquez pour changer
+                          </p>
+                        </div>
+                        <div className="am-upload-zone__check">✓</div>
+                      </div>
+                    ) : (
+                      /* Zone vide */
+                      <div className="am-upload-zone__placeholder">
+                        <div className="am-upload-zone__icon">📁</div>
+                        <p className="am-upload-zone__text">
+                          {isDragOver ? 'Déposez le fichier ici' : 'Glissez votre document ici'}
+                        </p>
+                        <p className="am-upload-zone__sub">ou cliquez pour parcourir</p>
+                        <div className="am-upload-zone__formats">PDF · JPG · PNG · Max 5 Mo</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Erreur upload */}
+                  {docError && (
+                    <div className="am-upload-error">⚠️ {docError}</div>
+                  )}
+
+                  {/* Note sécurité */}
+                  <div className="am-upload-note">
+                    <span>🔒</span>
+                    <span>Vos documents sont chiffrés et vérifiés par notre équipe sous 48h.</span>
+                  </div>
+                </div>
               </>
             )}
 
@@ -387,7 +490,6 @@ export default function AuthModal({ isOpen, onClose, initialMode }) {
 
           </form>
 
-          {/* Toggle mode */}
           <div className="am-toggle">
             {mode === 'login' ? (
               <p>Nouveau ici ? <span onClick={switchToRegister}>Créer un compte</span></p>

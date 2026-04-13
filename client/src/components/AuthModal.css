@@ -605,3 +605,190 @@
   .am-panel-left { display: none; }
   .am-panel-right { padding: 24px 20px; }
 }
+/* ============================================================
+   UPLOAD ZONE — Document justificatif
+   ============================================================ */
+.am-field__required { color: var(--am-red); margin-left: 2px; }
+
+.am-field__hint {
+  font-size: 12px;
+  color: var(--am-text-light);
+  margin: 2px 0 8px;
+  line-height: 1.5;
+}
+
+.am-upload-zone {
+  position: relative;
+  border: 1.5px dashed rgba(15,118,110,.35);
+  border-radius: 14px;
+  background: rgba(15,118,110,.04);
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all .25s ease;
+  text-align: center;
+}
+
+.am-upload-zone:hover {
+  border-color: rgba(15,118,110,.65);
+  background: rgba(15,118,110,.08);
+  box-shadow: 0 0 0 4px rgba(15,118,110,.08);
+}
+
+.am-upload-zone--drag {
+  border-color: var(--am-teal);
+  background: rgba(15,118,110,.1);
+  box-shadow: 0 0 0 4px rgba(15,118,110,.1);
+  transform: scale(1.01);
+}
+
+.am-upload-zone--done {
+  border-style: solid;
+  border-color: rgba(15,118,110,.4);
+  background: rgba(15,118,110,.05);
+}
+
+/* Placeholder (zone vide) */
+.am-upload-zone__placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.am-upload-zone__icon {
+  width: 52px; height: 52px;
+  background: rgba(15,118,110,.1);
+  border: 1px solid rgba(15,118,110,.2);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  margin-bottom: 6px;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+
+.am-upload-zone:hover .am-upload-zone__icon {
+  transform: translateY(-3px) scale(1.08);
+}
+
+.am-upload-zone__text {
+  font-family: 'Sora', sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--am-text-dark);
+  margin: 0;
+}
+
+.am-upload-zone__sub {
+  font-size: 12px;
+  color: var(--am-text-light);
+  margin: 0;
+}
+
+.am-upload-zone__sub span {
+  color: var(--am-teal);
+  font-weight: 600;
+}
+
+.am-upload-zone__formats {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(15,118,110,.08);
+  border: 1px solid rgba(15,118,110,.18);
+  color: var(--am-teal);
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-top: 6px;
+}
+
+/* Fichier sélectionné */
+.am-upload-zone__success {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+}
+
+.am-upload-zone__success-icon {
+  width: 44px; height: 44px;
+  background: rgba(15,118,110,.12);
+  border: 1px solid rgba(15,118,110,.25);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.am-upload-zone__success-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.am-upload-zone__filename {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--am-text-dark);
+  margin: 0 0 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.am-upload-zone__filesize {
+  font-size: 11px;
+  color: var(--am-text-light);
+  margin: 0;
+}
+
+.am-upload-zone__check {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, var(--am-teal), var(--am-teal-2));
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: var(--am-shadow-teal);
+}
+
+/* Erreur upload */
+.am-upload-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--am-red-soft);
+  border: 1px solid #fecaca;
+  border-left: 4px solid var(--am-red);
+  color: #991b1b;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 9px 12px;
+  border-radius: 10px;
+  margin-top: 8px;
+}
+
+/* Note sécurité */
+.am-upload-note {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #f0fdfa;
+  border: 1px solid rgba(15,118,110,.15);
+  color: var(--am-teal);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 9px 13px;
+  border-radius: 10px;
+  margin-top: 8px;
+  line-height: 1.4;
+}

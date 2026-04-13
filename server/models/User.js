@@ -29,6 +29,11 @@ const User = sequelize.define('User', {
     type: DataTypes.ENUM('patient', 'medecin', 'admin'),
     defaultValue: 'patient'
   },
+  // 🎯 NOUVEAU : Statut de validation pour bloquer les médecins non vérifiés
+  statut_validation: {
+    type: DataTypes.STRING,
+    defaultValue: 'valide'
+  },
   // --- AJOUTS POUR CORRIGER L'ERREUR ---
   created_at: {
     type: DataTypes.DATE,

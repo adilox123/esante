@@ -1543,3 +1543,61 @@
   color: #991b1b;
   border: 1px solid rgba(239,68,68,.25);
 }
+
+.dd-confirm-modal {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 30px;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  animation: modalScale 0.3s ease-out;
+}
+
+@keyframes modalScale {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.dd-confirm-modal__icon {
+  font-size: 50px;
+  margin-bottom: 15px;
+}
+
+.dd-confirm-modal__title {
+  color: #1e293b;
+  font-size: 1.4rem;
+  margin-bottom: 10px;
+}
+
+.dd-confirm-modal__text {
+  color: #64748b;
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-bottom: 25px;
+}
+
+.dd-confirm-modal__warning {
+  display: block;
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: #ef4444;
+  font-style: italic;
+}
+
+.dd-confirm-modal__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* On réutilise tes boutons existants mais on s'assure qu'ils sont full width ici */
+.dd-confirm-modal__actions .dd-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 600;
+}

@@ -40,7 +40,7 @@ router.get('/patient/:patientId', appointmentController.getRdvsByPatient);
 // ==========================================
 
 router.post('/', appointmentController.createAppointment);
-router.post('/book', appointmentController.bookAppointment);
+
 router.put('/:id/note', appointmentController.updateNoteSecrete);
 router.delete('/:id', appointmentController.deleteAppointment);
 router.put('/:id/statut', appointmentController.updateRdvStatus);

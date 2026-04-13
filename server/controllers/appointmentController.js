@@ -31,12 +31,6 @@ exports.createAppointment = async (req, res) => {
 // ==========================================
 // RÉCUPÉRER LES RDV D'UN MÉDECIN
 // ==========================================
-// ==========================================
-// RÉCUPÉRER LES RDV D'UN MÉDECIN
-// ==========================================
-// ==========================================
-// RÉCUPÉRER LES RDV D'UN MÉDECIN
-// ==========================================
 exports.getRdvsByMedecin = async (req, res) => {
   try {
     const { medecinId } = req.params;
@@ -45,10 +39,11 @@ exports.getRdvsByMedecin = async (req, res) => {
       include: [
         {
           model: Patient,
+          attributes: ['telephone'], // 👈 AJOUTÉ : On récupère le téléphone ici
           include: [
             { 
               model: User, 
-              as: 'user', // L'alias qui a réparé ton erreur
+              as: 'user', 
               attributes: ['nom', 'prenom'] 
             }
           ]
@@ -57,18 +52,17 @@ exports.getRdvsByMedecin = async (req, res) => {
       order: [['date_rdv', 'ASC']]
     });
 
-    // 🎯 LE SECRET EST ICI : On formate les données pour React !
     const dataFormatee = rdvs.map(rdv => {
-      const rdvJson = rdv.toJSON(); // Convertit en objet simple
-      
-      // On cherche le nom (que Sequelize l'écrive avec ou sans majuscule)
+      const rdvJson = rdv.toJSON();
       const userData = rdvJson.Patient?.user || rdvJson.patient?.user || rdvJson.Patient?.User || rdvJson.patient?.User;
       
       const nomComplet = userData ? `${userData.nom} ${userData.prenom || ''}`.trim() : `Patient N°${rdvJson.patient_id}`;
 
       return {
         ...rdvJson,
-        nom_patient: nomComplet // On ajoute cette ligne magique pour React
+        nom_patient: nomComplet,
+        // 🎯 AJOUTÉ : On envoie le téléphone au frontend pour le bouton "Appeler"
+        telephone_patient: rdvJson.Patient?.telephone || rdvJson.patient?.telephone || '' 
       };
     });
 
@@ -169,32 +163,11 @@ exports.deleteAppointment = async (req, res) => {
 };
 
 // ==========================================
-// RÉSERVATION DE RDV (optionnel)
-// ==========================================
-exports.bookAppointment = async (req, res) => {
-  try {
-    const { patient_id, medecin_id, date_rdv, heure_rdv, motif } = req.body;
-    const rdv = await RendezVous.create({
-      patient_id,
-      medecin_id,
-      date_rdv,
-      heure_rdv,
-      motif: motif || "Consultation",
-      statut: "À venir"
-    });
-    res.status(201).json({ success: true, rdv });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-
-// ==========================================
-// MÉDECIN : CONFIRMER OU ANNULER UN RDV
+// MÉDECIN : CONFIRMER, ANNULER OU ABSENCE (NON HONORÉ)
 // ==========================================
 exports.updateRdvStatus = async (req, res) => {
   try {
-    const { id } = req.params; // C'est l'ID du RDV
+    const { id } = req.params; 
     const { statut } = req.body;
 
     // 1. Mettre à jour le statut du rendez-vous
@@ -202,6 +175,29 @@ exports.updateRdvStatus = async (req, res) => {
       replacements: { statut, id },
       type: db.QueryTypes.UPDATE
     });
+
+    // 🚨 LOGIQUE DE BAN AUTOMATIQUE (Si statut === 'non honoré')
+    if (statut === 'non honoré') {
+        const rdv = await RendezVous.findByPk(id);
+        if (rdv) {
+            // Compter les absences du patient
+            const count = await RendezVous.count({
+                where: { patient_id: rdv.patient_id, statut: 'non honoré' }
+            });
+
+            // Si 3 absences ou plus, on suspend l'utilisateur
+            if (count >= 3) {
+                const patient = await Patient.findByPk(rdv.patient_id);
+                if (patient) {
+                    await User.update(
+                        { statut_validation: 'suspendu' }, 
+                        { where: { id: patient.user_id } }
+                    );
+                    console.log(`🚫 Utilisateur ${patient.user_id} suspendu pour 3 absences.`);
+                }
+            }
+        }
+    }
 
     // 2. Récupérer les infos pour la notification
     const rdvInfo = await db.query(
@@ -217,19 +213,26 @@ exports.updateRdvStatus = async (req, res) => {
     if (rdvInfo.length > 0) {
       const info = rdvInfo[0];
       
-      const message = statut === 'Confirmé' 
-        ? `✅ Votre rendez-vous avec le Dr. ${info.medecin_nom} a été confirmé. Vous pouvez maintenant procéder au paiement.` 
-        : `❌ Désolé, le Dr. ${info.medecin_nom} a dû annuler votre rendez-vous.`;
+      let message = "";
+      let type = "info";
 
-      const type = statut === 'Confirmé' ? 'success' : 'danger';
+      if (statut === 'Confirmé') {
+          message = `✅ Votre rendez-vous avec le Dr. ${info.medecin_nom} a été confirmé. Vous pouvez maintenant procéder au paiement.`;
+          type = 'success';
+      } else if (statut === 'Annulé') {
+          message = `❌ Désolé, le Dr. ${info.medecin_nom} a dû annuler votre rendez-vous.`;
+          type = 'danger';
+      } else if (statut === 'non honoré') {
+          message = `⚠️ Vous avez été marqué comme absent pour votre RDV avec le Dr. ${info.medecin_nom}. Attention, après 3 absences, votre compte sera suspendu.`;
+          type = 'warning';
+      }
 
-      // 🎯 MODIFICATION ICI : On ajoute appointment_id
       await db.query(
         `INSERT INTO notifications (user_id, appointment_id, message, type) 
          VALUES (:userId, :rdvId, :msg, :type)`,
         { replacements: { 
             userId: info.user_id, 
-            rdvId: id, // On lie la notif au RDV
+            rdvId: id, 
             msg: message, 
             type: type 
         }}

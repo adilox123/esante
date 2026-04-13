@@ -37,6 +37,9 @@ export default function DoctorDashboard() {
   const [notifications, setNotifications] = useState([]);
   const [rdvActionFeedback, setRdvActionFeedback] = useState(null); // { type: 'success'|'error', msg }
   const notifRef = useRef(null);
+  const [visiblePhoneId, setVisiblePhoneId] = useState(null);
+  const [showAbsentModal, setShowAbsentModal] = useState(false);
+  const [rdvToMarkAbsent, setRdvToMarkAbsent] = useState(null);
 
   const medecinId = localStorage.getItem('userId');
 
@@ -92,6 +95,7 @@ export default function DoctorDashboard() {
           id: rdv.id,
           patient_id: rdv.patient_id,
           patient: rdv.nom_patient || `Patient N°${rdv.patient_id}`,
+          telephone: rdv.telephone_patient || rdv.telephone || '', // ✅ MODIFICATION: Ajout du téléphone pour l'appel
           date: rdv.date_rdv,
           heure: rdv.heure_rdv,
           motif: rdv.motif,
@@ -102,7 +106,7 @@ export default function DoctorDashboard() {
 
         // ✅ NOUVEAU : Initialiser les notifications avec les RDV "À venir"
         const rdvsEnAttente = vraisRdvs.filter(r => r.statut === 'En attente');
-setNotifications(rdvsEnAttente.map(r => ({ ...r, _read: false })));
+        setNotifications(rdvsEnAttente.map(r => ({ ...r, _read: false })));
       }
     })
     .catch(err => console.error("Erreur chargement :", err));
@@ -122,7 +126,6 @@ setNotifications(rdvsEnAttente.map(r => ({ ...r, _read: false })));
   // ✅ NOUVEAU : Confirmer un RDV
   const handleConfirmRdv = async (rdvId) => {
     try {
-      // 🎯 LA CORRECTION EST SUR CETTE LIGNE : on a ajouté /statut
       await axios.put(`http://localhost:5000/api/appointments/${rdvId}/statut`, { statut: 'Confirmé' });
       
       setRendezVous(prev => prev.map(r => r.id === rdvId ? { ...r, statut: 'Confirmé' } : r));
@@ -130,7 +133,7 @@ setNotifications(rdvsEnAttente.map(r => ({ ...r, _read: false })));
       setRdvActionFeedback({ type: 'success', msg: '✅ Rendez-vous confirmé avec succès !' });
       setTimeout(() => setRdvActionFeedback(null), 3000);
     } catch (err) {
-      console.error(err); // Toujours pratique pour voir l'erreur dans la console !
+      console.error(err); 
       setRdvActionFeedback({ type: 'error', msg: '❌ Erreur lors de la confirmation.' });
       setTimeout(() => setRdvActionFeedback(null), 3000);
     }
@@ -139,12 +142,9 @@ setNotifications(rdvsEnAttente.map(r => ({ ...r, _read: false })));
   // ✅ NOUVEAU : Annuler un RDV
   const handleCancelRdv = async (rdvId) => {
     try {
-      // 🎯 ON AJOUTE /statut ICI AUSSI :
       await axios.put(`http://localhost:5000/api/appointments/${rdvId}/statut`, { statut: 'Annulé' });
       
       setRendezVous(prev => prev.map(r => r.id === rdvId ? { ...r, statut: 'Annulé' } : r));
-      
-      // On retire la notification de la liste puisqu'elle est traitée
       setNotifications(prev => prev.filter(n => n.id !== rdvId));
       
       setRdvActionFeedback({ type: 'success', msg: '🗑️ Rendez-vous annulé.' });
@@ -155,6 +155,28 @@ setNotifications(rdvsEnAttente.map(r => ({ ...r, _read: false })));
       setTimeout(() => setRdvActionFeedback(null), 3000);
     }
   };
+
+  // ✅ NOUVEAU : Marquer un patient comme absent (Non honoré)
+ const handlePatientAbsent = (rdv) => {
+  setRdvToMarkAbsent(rdv); // On stocke le RDV sélectionné
+  setShowAbsentModal(true); // On ouvre la modale
+};
+
+// La fonction qui sera appelée quand on clique sur "Confirmer" dans la modale
+const confirmAbsentAction = async () => {
+  if (!rdvToMarkAbsent) return;
+  try {
+    await axios.put(`http://localhost:5000/api/appointments/${rdvToMarkAbsent.id}/statut`, { statut: 'non honoré' });
+    setRendezVous(prev => prev.map(r => r.id === rdvToMarkAbsent.id ? { ...r, statut: 'non honoré' } : r));
+    setRdvActionFeedback({ type: 'success', msg: '⚠️ Patient marqué comme absent.' });
+    setTimeout(() => setRdvActionFeedback(null), 3000);
+  } catch (err) {
+    setRdvActionFeedback({ type: 'error', msg: '❌ Erreur de mise à jour.' });
+  } finally {
+    setShowAbsentModal(false);
+    setRdvToMarkAbsent(null);
+  }
+};
 
   const unreadCount = notifications.filter(n => !n._read).length;
 
@@ -334,7 +356,6 @@ setNotifications(rdvsEnAttente.map(r => ({ ...r, _read: false })));
                 className={`dd-notif-bell ${unreadCount > 0 ? 'dd-notif-bell--active' : ''}`}
                 onClick={() => {
                   setNotifOpen(v => !v);
-                  // Marquer tout comme lu à l'ouverture
                   if (!notifOpen) setNotifications(prev => prev.map(n => ({ ...n, _read: true })));
                 }}
                 title="Notifications rendez-vous"
@@ -345,7 +366,6 @@ setNotifications(rdvsEnAttente.map(r => ({ ...r, _read: false })));
                 )}
               </button>
 
-              {/* Dropdown notifications */}
               {notifOpen && (
                 <div className="dd-notif-dropdown">
                   <div className="dd-notif-dropdown__header">
@@ -374,12 +394,10 @@ setNotifications(rdvsEnAttente.map(r => ({ ...r, _read: false })));
                           className={`dd-notif-item ${notif.statut === 'Confirmé' ? 'dd-notif-item--confirmed' : ''}`}
                           style={{ animationDelay: `${i * 60}ms` }}
                         >
-                          {/* Avatar patient */}
                           <div className="dd-notif-item__avatar">
                             {notif.patient.charAt(0).toUpperCase()}
                           </div>
 
-                          {/* Infos */}
                           <div className="dd-notif-item__content">
                             <p className="dd-notif-item__patient">{notif.patient}</p>
                             <p className="dd-notif-item__details">
@@ -392,7 +410,6 @@ setNotifications(rdvsEnAttente.map(r => ({ ...r, _read: false })));
                                 <FaCheckCircle size={10} /> Confirmé
                               </span>
                             ) : (
-                              /* Boutons Confirmer / Annuler */
                               <div className="dd-notif-item__actions">
                                 <button
                                   className="dd-notif-btn dd-notif-btn--confirm"
@@ -497,11 +514,36 @@ setNotifications(rdvsEnAttente.map(r => ({ ...r, _read: false })));
                       <p className="dd-rdv-card__motif">Motif : {rdv.motif}</p>
                       <span className="dd-badge dd-badge--active">{rdv.statut}</span>
                     </div>
-                    <div className="dd-rdv-card__actions">
-                      <button className="dd-btn dd-btn--chat" onClick={() => setActiveChat(rdv)}>
-                        <FaComments /> Chat
-                      </button>
-                    </div>
+                    {/* ✅ MODIFICATION: Actions de l'Agenda mises à jour avec le bouton d'appel intelligent */}
+<div className="dd-rdv-card__actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+  
+  {/* Bouton Appeler (1er clic = affiche le numéro, 2ème clic = appelle) */}
+  {visiblePhoneId === rdv.id ? (
+    <a 
+      href={`tel:${rdv.telephone}`} 
+      className="dd-btn dd-btn--ghost" 
+      style={{ textDecoration: 'none', fontWeight: 'bold', color: '#0ea5e9' }}
+    >
+      📞 {rdv.telephone || 'Aucun numéro'}
+    </a>
+  ) : (
+    <button 
+      className="dd-btn dd-btn--ghost" 
+      onClick={() => setVisiblePhoneId(rdv.id)}
+    >
+      📞 Appeler
+    </button>
+  )}
+
+  <button className="dd-btn dd-btn--chat" onClick={() => setActiveChat(rdv)}>
+    <FaComments /> Message
+  </button>
+  
+  <button className="dd-btn dd-btn--danger" onClick={() => handlePatientAbsent(rdv.id)}>
+    ⚠️ Non honoré
+  </button>
+  
+</div>
                   </div>
                 ))
               )}
@@ -755,6 +797,37 @@ setNotifications(rdvsEnAttente.map(r => ({ ...r, _read: false })));
           </div>
         </div>
       )}
+
+      {/* ===== MODALE ABSENCE CUSTOM ===== */}
+{showAbsentModal && (
+  <div className="dd-modal-overlay dd-fade-in">
+    <div className="dd-confirm-modal">
+      <div className="dd-confirm-modal__icon">⚠️</div>
+      <h3 className="dd-confirm-modal__title">Confirmer l'absence ?</h3>
+      <p className="dd-confirm-modal__text">
+        Voulez-vous marquer <strong>{rdvToMarkAbsent?.patient}</strong> comme absent ? 
+        <br />
+        <span className="dd-confirm-modal__warning">
+          Cette action sera comptabilisée dans son dossier (Règle des 3 absences).
+        </span>
+      </p>
+      <div className="dd-confirm-modal__actions">
+        <button 
+          className="dd-btn dd-btn--danger" 
+          onClick={confirmAbsentAction}
+        >
+          Confirmer l'absence
+        </button>
+        <button 
+          className="dd-btn dd-btn--ghost" 
+          onClick={() => setShowAbsentModal(false)}
+        >
+          Annuler
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }

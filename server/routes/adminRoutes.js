@@ -11,5 +11,6 @@ router.put('/patients/:id', adminController.updatePatient);
 router.put('/medecins/:id', adminController.updateMedecin);
 router.delete('/medecins/:id', adminController.deleteMedecin);
 router.delete('/patients/:id', adminController.deletePatient);
+router.put('/valider-medecin/:id', adminController.validerMedecin);
 
 module.exports = router;

@@ -41,6 +41,10 @@ const Medecin = sequelize.define('Medecin', {
     type: DataTypes.INTEGER,
     defaultValue: 200 // Un tarif par défaut au cas où
   }
+  ,document_preuve: {
+  type: DataTypes.STRING,
+  allowNull: true
+},
 
 
 }, {
